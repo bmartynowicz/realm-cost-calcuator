@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sandbox": "node sandbox/server.mjs",
+    "start": "node sandbox/server.mjs"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
