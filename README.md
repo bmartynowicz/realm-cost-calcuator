@@ -73,16 +73,19 @@ environment variable if you need a different port.
 ## Project structure
 
 ```
-index.html         # Application shell and layout
-src/main.ts        # Calculator logic and DOM bindings
-src/styles.css     # Global styling for the single-page experience
+index.html          # Application shell and layout
+src/main.ts         # Calculator logic and DOM bindings
+src/data/catalog.ts # Shared catalog of sources and SIEM destinations
+src/styles.css      # Global styling for the single-page experience
 ```
 
 Static assets placed in `public/` are copied as-is to the output directory during builds.
 
 ## Customizing the model
 
-The pricing assumptions live in `src/main.ts` within the 50-entry `sources` array and the
-top-20 `destinations` array. Adjust the per-million event pricing or optimization
-percentages to fit your data contracts, and tweak the `REALM_PLATFORM_FEE_PER_MILLION`
-constant to reflect your Realm platform agreement.
+The pricing assumptions live in `src/data/catalog.ts`, which exports the 50-entry
+`sources` array and top-20 `destinations` array. Adjust the per-million event pricing or
+optimization percentages to fit your data contracts, and tweak the
+`REALM_PLATFORM_FEE_PER_MILLION` constant in `src/main.ts` to reflect your Realm platform
+agreement. After editing the TypeScript catalog, rerun `tsc --pretty false` so the
+compiled JavaScript modules used by `preview.html` and the sandbox server stay in sync.
