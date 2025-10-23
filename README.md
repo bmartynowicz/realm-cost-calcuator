@@ -53,11 +53,22 @@ bundled Node server, which serves `preview.html` and the compiled JavaScript dir
 ```bash
 # No npm install required
 npm run sandbox
+
+# `npm start` is an alias for the same command if you prefer muscle memory defaults
+npm start
 ```
 
 The script starts a static server on <http://localhost:4178>. Open that URL in your
 browser to click around the calculator with hot-reloading disabled. Set the `PORT`
 environment variable if you need a different port.
+
+#### Troubleshooting the sandbox script
+
+- If you see `npm ERR! Missing script: "sandbox"`, ensure your working copy is on the
+  latest commit (`git pull` or re-checkout the repository). The sandbox command lives in
+  the root `package.json`.
+- You can always bypass npm scripts entirely by running `node sandbox/server.mjs` from
+  the project root — the server has no external dependencies.
 
 ## Project structure
 
