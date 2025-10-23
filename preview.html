@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Realm Cost Calculator Preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero">
+        <div class="hero__content">
+          <p class="hero__eyebrow">Realm Cost Explorer</p>
+          <h1 class="hero__title">Estimate your integration spend in minutes</h1>
+          <p class="hero__subtitle">
+            Choose from 50 enterprise data sources and the top 20 SIEM destinations,
+            enter the average daily traffic you expect to synchronize, and instantly
+            compare traditional integration costs against Realm's optimized pricing.
+          </p>
+        </div>
+        <div class="hero__meta">
+          <p class="hero__badge">Real-time calculator</p>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="panel" aria-labelledby="source-heading">
+          <div class="panel__header">
+            <h2 class="panel__title" id="source-heading">Source configuration</h2>
+            <p class="panel__subtitle">
+              Select the network, identity, infrastructure, or endpoint system
+              generating the data and we will use its published egress pricing.
+            </p>
+          </div>
+          <label class="field">
+            <span class="field__label">Data source</span>
+            <select id="sourceSelect" class="field__input"></select>
+            <span id="sourceSummary" class="field__hint"></span>
+          </label>
+        </section>
+
+        <section class="panel" aria-labelledby="destination-heading">
+          <div class="panel__header">
+            <h2 class="panel__title" id="destination-heading">Destination configuration</h2>
+            <p class="panel__subtitle">
+              Where is the data going? Pick one of the top 20 SIEM platforms to
+              estimate ingestion costs.
+            </p>
+          </div>
+          <label class="field">
+            <span class="field__label">Destination</span>
+            <select id="destinationSelect" class="field__input"></select>
+            <span id="destinationSummary" class="field__hint"></span>
+          </label>
+        </section>
+
+        <section class="panel" aria-labelledby="traffic-heading">
+          <div class="panel__header">
+            <h2 class="panel__title" id="traffic-heading">Traffic assumptions</h2>
+            <p class="panel__subtitle">
+              Provide the average number of events that will flow through Realm each day.
+            </p>
+          </div>
+          <label class="field">
+            <span class="field__label">Average daily traffic</span>
+            <div class="field__input field__input--with-addon">
+              <input
+                type="number"
+                id="trafficInput"
+                name="traffic"
+                inputmode="numeric"
+                min="0"
+                step="1000"
+                placeholder="e.g. 25000"
+                aria-describedby="trafficHelp trafficError"
+              />
+              <span class="field__addon">events</span>
+            </div>
+            <span id="trafficHelp" class="field__hint"
+              >We project monthly totals by multiplying daily volume by 30.</span
+            >
+            <span id="trafficError" class="field__error" role="alert"></span>
+          </label>
+        </section>
+
+        <section class="panel panel--accent" aria-labelledby="results-heading">
+          <div class="panel__header">
+            <h2 class="panel__title" id="results-heading">Cost projection</h2>
+            <p class="panel__subtitle">
+              Instantly compare expected integration costs with and without Realm's
+              optimization.
+            </p>
+          </div>
+          <dl class="metrics">
+            <div class="metrics__item">
+              <dt class="metrics__label">Monthly events</dt>
+              <dd class="metrics__value" id="monthlyEvents">—</dd>
+            </div>
+            <div class="metrics__item">
+              <dt class="metrics__label">Standard integration cost</dt>
+              <dd class="metrics__value" id="standardCost">—</dd>
+              <dd class="metrics__description" id="standardBreakdown"></dd>
+            </div>
+            <div class="metrics__item">
+              <dt class="metrics__label">Realm optimized cost</dt>
+              <dd class="metrics__value metrics__value--highlight" id="realmCost">—</dd>
+              <dd class="metrics__description" id="realmBreakdown"></dd>
+            </div>
+            <div class="metrics__item metrics__item--savings">
+              <dt class="metrics__label">Projected monthly savings</dt>
+              <dd class="metrics__value" id="savings">—</dd>
+              <dd class="metrics__description" id="savingsPercent"></dd>
+            </div>
+          </dl>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <p>
+          These estimates are for planning purposes only. Contact the Realm team to tailor
+          pricing to your specific workloads and data retention policies.
+        </p>
+      </footer>
+    </div>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

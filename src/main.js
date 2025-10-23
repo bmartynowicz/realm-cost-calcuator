@@ -1,0 +1,626 @@
+"use strict";
+const REALM_PLATFORM_FEE_PER_MILLION = 7.5;
+const DAYS_PER_MONTH = 30;
+const sources = [
+    // Cloud and identity observability
+    {
+        id: 'aws-cloudtrail',
+        label: 'AWS CloudTrail',
+        description: 'Account activity events captured across AWS services.',
+        costPerMillionEvents: 18,
+        realmOptimization: 0.35,
+    },
+    {
+        id: 'aws-security-hub',
+        label: 'AWS Security Hub',
+        description: 'Consolidated AWS security findings and compliance insights.',
+        costPerMillionEvents: 22,
+        realmOptimization: 0.33,
+    },
+    {
+        id: 'aws-guardduty',
+        label: 'AWS GuardDuty',
+        description: 'Threat detection telemetry from GuardDuty detectors.',
+        costPerMillionEvents: 26,
+        realmOptimization: 0.39,
+    },
+    {
+        id: 'aws-vpc-flow-logs',
+        label: 'AWS VPC Flow Logs',
+        description: 'Network flow records exported from VPC subnets and interfaces.',
+        costPerMillionEvents: 14,
+        realmOptimization: 0.27,
+    },
+    {
+        id: 'azure-active-directory',
+        label: 'Microsoft Entra ID (Azure AD)',
+        description: 'Sign-in and audit events from Entra ID tenants.',
+        costPerMillionEvents: 19,
+        realmOptimization: 0.33,
+    },
+    {
+        id: 'azure-activity-logs',
+        label: 'Azure Activity Logs',
+        description: 'Subscription-level operations and service health records.',
+        costPerMillionEvents: 17,
+        realmOptimization: 0.3,
+    },
+    {
+        id: 'azure-nsg-flow-logs',
+        label: 'Azure NSG Flow Logs',
+        description: 'Layer 4 flow metadata streamed from Azure network security groups.',
+        costPerMillionEvents: 15,
+        realmOptimization: 0.28,
+    },
+    {
+        id: 'google-cloud-audit-logs',
+        label: 'Google Cloud Audit Logs',
+        description: 'Admin activity, data access, and system event logging.',
+        costPerMillionEvents: 18,
+        realmOptimization: 0.32,
+    },
+    {
+        id: 'google-cloud-vpc-flow',
+        label: 'Google Cloud VPC Flow Logs',
+        description: 'Flow telemetry emitted from Google Cloud VPC subnets.',
+        costPerMillionEvents: 15,
+        realmOptimization: 0.27,
+    },
+    {
+        id: 'google-workspace',
+        label: 'Google Workspace Admin Logs',
+        description: 'Collaboration and authentication activity across Workspace apps.',
+        costPerMillionEvents: 20,
+        realmOptimization: 0.34,
+    },
+    {
+        id: 'okta',
+        label: 'Okta Workforce Identity',
+        description: 'Identity provider system logs and authentication events.',
+        costPerMillionEvents: 23,
+        realmOptimization: 0.38,
+    },
+    {
+        id: 'duo-security',
+        label: 'Cisco Duo Security',
+        description: 'Multi-factor authentication access activity and anomalies.',
+        costPerMillionEvents: 17,
+        realmOptimization: 0.29,
+    },
+    {
+        id: 'pingfederate',
+        label: 'PingFederate',
+        description: 'Federated SSO and token issuance audit logs.',
+        costPerMillionEvents: 19,
+        realmOptimization: 0.3,
+    },
+    {
+        id: 'onelogin',
+        label: 'OneLogin',
+        description: 'Unified access management sign-in and provisioning events.',
+        costPerMillionEvents: 18,
+        realmOptimization: 0.31,
+    },
+    {
+        id: 'sailpoint-identitynow',
+        label: 'SailPoint IdentityNow',
+        description: 'Identity governance lifecycle and certification logging.',
+        costPerMillionEvents: 22,
+        realmOptimization: 0.36,
+    },
+    {
+        id: 'microsoft-active-directory',
+        label: 'Microsoft Active Directory',
+        description: 'Domain controller security and replication event forwarding.',
+        costPerMillionEvents: 16,
+        realmOptimization: 0.27,
+    },
+    {
+        id: 'service-now',
+        label: 'ServiceNow ITSM',
+        description: 'Change, incident, and configuration item audit history.',
+        costPerMillionEvents: 21,
+        realmOptimization: 0.33,
+    },
+    {
+        id: 'github-audit-log',
+        label: 'GitHub Enterprise Audit Log',
+        description: 'Repository, user, and admin actions for GitHub organizations.',
+        costPerMillionEvents: 18,
+        realmOptimization: 0.29,
+    },
+    {
+        id: 'kubernetes-audit',
+        label: 'Kubernetes Audit Logs',
+        description: 'API server events captured from Kubernetes audit policies.',
+        costPerMillionEvents: 14,
+        realmOptimization: 0.26,
+    },
+    {
+        id: 'vmware-vsphere',
+        label: 'VMware vSphere',
+        description: 'Hypervisor lifecycle and configuration change logging.',
+        costPerMillionEvents: 20,
+        realmOptimization: 0.31,
+    },
+    // Network security telemetry
+    {
+        id: 'palo-alto-networks-ngfw',
+        label: 'Palo Alto Networks Next-Generation Firewall',
+        description: 'Threat, traffic, and URL filtering logs from PAN-OS.',
+        costPerMillionEvents: 27,
+        realmOptimization: 0.37,
+    },
+    {
+        id: 'cisco-secure-firewall',
+        label: 'Cisco Secure Firewall',
+        description: 'Firewall, intrusion, and malware detection telemetry.',
+        costPerMillionEvents: 25,
+        realmOptimization: 0.35,
+    },
+    {
+        id: 'fortinet-fortigate',
+        label: 'Fortinet FortiGate',
+        description: 'Unified threat management events from FortiGate appliances.',
+        costPerMillionEvents: 23,
+        realmOptimization: 0.34,
+    },
+    {
+        id: 'checkpoint-quantum',
+        label: 'Check Point Quantum Security Gateway',
+        description: 'Firewall, IPS, and application control logging.',
+        costPerMillionEvents: 24,
+        realmOptimization: 0.33,
+    },
+    {
+        id: 'juniper-srx',
+        label: 'Juniper SRX Firewall',
+        description: 'High-performance firewall session and threat logs.',
+        costPerMillionEvents: 21,
+        realmOptimization: 0.31,
+    },
+    {
+        id: 'cisco-meraki-mx',
+        label: 'Cisco Meraki MX',
+        description: 'Cloud-managed security appliance event forwarding.',
+        costPerMillionEvents: 19,
+        realmOptimization: 0.3,
+    },
+    {
+        id: 'cisco-umbrella',
+        label: 'Cisco Umbrella Secure Internet Gateway',
+        description: 'DNS-layer security and secure web gateway telemetry.',
+        costPerMillionEvents: 20,
+        realmOptimization: 0.32,
+    },
+    {
+        id: 'cloudflare-gateway',
+        label: 'Cloudflare Gateway',
+        description: 'Secure web gateway and Zero Trust access logs.',
+        costPerMillionEvents: 18,
+        realmOptimization: 0.3,
+    },
+    {
+        id: 'zscaler-internet-access',
+        label: 'Zscaler Internet Access',
+        description: 'Cloud proxy transactions and threat protection data.',
+        costPerMillionEvents: 22,
+        realmOptimization: 0.34,
+    },
+    {
+        id: 'f5-big-ip-apm',
+        label: 'F5 BIG-IP Access Policy Manager',
+        description: 'Access control, SSL VPN, and traffic management events.',
+        costPerMillionEvents: 21,
+        realmOptimization: 0.32,
+    },
+    {
+        id: 'netskope-secure-service-edge',
+        label: 'Netskope Secure Service Edge',
+        description: 'CASB, SWG, and ZTNA telemetry from Netskope tenants.',
+        costPerMillionEvents: 23,
+        realmOptimization: 0.35,
+    },
+    {
+        id: 'aruba-clearpass',
+        label: 'HPE Aruba ClearPass',
+        description: 'Network access control posture and authentication logs.',
+        costPerMillionEvents: 17,
+        realmOptimization: 0.28,
+    },
+    {
+        id: 'cisco-ise',
+        label: 'Cisco Identity Services Engine',
+        description: '802.1X, TACACS+, and network access control events.',
+        costPerMillionEvents: 18,
+        realmOptimization: 0.3,
+    },
+    {
+        id: 'proofpoint-email-protection',
+        label: 'Proofpoint Email Protection',
+        description: 'Email security filtering and threat response telemetry.',
+        costPerMillionEvents: 20,
+        realmOptimization: 0.31,
+    },
+    {
+        id: 'barracuda-cloudgen-firewall',
+        label: 'Barracuda CloudGen Firewall',
+        description: 'Distributed firewall and SD-WAN event forwarding.',
+        costPerMillionEvents: 17,
+        realmOptimization: 0.26,
+    },
+    {
+        id: 'sonicwall-capture-security',
+        label: 'SonicWall Capture Security',
+        description: 'Firewall and advanced threat protection analytics.',
+        costPerMillionEvents: 16,
+        realmOptimization: 0.25,
+    },
+    {
+        id: 'sophos-xg-firewall',
+        label: 'Sophos XG Firewall',
+        description: 'Next-gen firewall and synchronized security logging.',
+        costPerMillionEvents: 18,
+        realmOptimization: 0.29,
+    },
+    {
+        id: 'extrahop-revealx',
+        label: 'ExtraHop Reveal(x)',
+        description: 'Network detection and response transaction telemetry.',
+        costPerMillionEvents: 24,
+        realmOptimization: 0.36,
+    },
+    {
+        id: 'imperva-securesphere',
+        label: 'Imperva SecureSphere',
+        description: 'Web application firewall and database activity monitoring.',
+        costPerMillionEvents: 22,
+        realmOptimization: 0.33,
+    },
+    // Endpoint detection and response
+    {
+        id: 'tanium-endpoint',
+        label: 'Tanium Endpoint Platform',
+        description: 'Endpoint telemetry and configuration state assessments.',
+        costPerMillionEvents: 25,
+        realmOptimization: 0.37,
+    },
+    {
+        id: 'microsoft-defender-endpoint',
+        label: 'Microsoft Defender for Endpoint',
+        description: 'Behavioral detections and device telemetry from Defender.',
+        costPerMillionEvents: 26,
+        realmOptimization: 0.38,
+    },
+    {
+        id: 'crowdstrike-falcon',
+        label: 'CrowdStrike Falcon',
+        description: 'EDR detections, managed threat hunting, and audit events.',
+        costPerMillionEvents: 28,
+        realmOptimization: 0.4,
+    },
+    {
+        id: 'sentinelone-singularity',
+        label: 'SentinelOne Singularity',
+        description: 'Autonomous EDR telemetry with storyline context.',
+        costPerMillionEvents: 27,
+        realmOptimization: 0.39,
+    },
+    {
+        id: 'vmware-carbon-black',
+        label: 'VMware Carbon Black Cloud',
+        description: 'Endpoint, workload, and container threat analytics.',
+        costPerMillionEvents: 24,
+        realmOptimization: 0.35,
+    },
+    {
+        id: 'trend-micro-apex-one',
+        label: 'Trend Micro Apex One',
+        description: 'Endpoint protection and XDR detection telemetry.',
+        costPerMillionEvents: 23,
+        realmOptimization: 0.34,
+    },
+    {
+        id: 'sophos-intercept-x',
+        label: 'Sophos Intercept X',
+        description: 'Deep learning-driven endpoint detection events.',
+        costPerMillionEvents: 22,
+        realmOptimization: 0.33,
+    },
+    {
+        id: 'kaspersky-endpoint-security',
+        label: 'Kaspersky Endpoint Security',
+        description: 'Workstation and server security monitoring logs.',
+        costPerMillionEvents: 19,
+        realmOptimization: 0.3,
+    },
+    {
+        id: 'bitdefender-gravityzone',
+        label: 'Bitdefender GravityZone',
+        description: 'Endpoint protection, risk analytics, and sandboxing.',
+        costPerMillionEvents: 20,
+        realmOptimization: 0.32,
+    },
+    {
+        id: 'mcafee-mvision',
+        label: 'Trellix (McAfee) MVISION Endpoint',
+        description: 'Endpoint detection and response with unified agent.',
+        costPerMillionEvents: 21,
+        realmOptimization: 0.31,
+    },
+    {
+        id: 'elastic-endpoint-security',
+        label: 'Elastic Endpoint Security',
+        description: 'Elastic Security agent telemetry and protection alerts.',
+        costPerMillionEvents: 22,
+        realmOptimization: 0.34,
+    },
+];
+const destinations = [
+    {
+        id: 'splunk-es',
+        label: 'Splunk Enterprise Security',
+        description: 'SIEM ingest licensing for Splunk Enterprise Security.',
+        costPerMillionEvents: 32,
+        realmOptimization: 0.36,
+    },
+    {
+        id: 'microsoft-sentinel',
+        label: 'Microsoft Sentinel',
+        description: 'Azure-native SIEM with pay-as-you-go log analytics ingestion.',
+        costPerMillionEvents: 27,
+        realmOptimization: 0.34,
+    },
+    {
+        id: 'ibm-qradar',
+        label: 'IBM Security QRadar',
+        description: 'Event processor capacity sized for mid-market deployments.',
+        costPerMillionEvents: 29,
+        realmOptimization: 0.33,
+    },
+    {
+        id: 'sumo-logic-siem',
+        label: 'Sumo Logic Cloud SIEM',
+        description: 'Cloud-native SIEM with continuous analytics ingest tier.',
+        costPerMillionEvents: 24,
+        realmOptimization: 0.31,
+    },
+    {
+        id: 'google-chronicle',
+        label: 'Google Chronicle Security Operations',
+        description: 'Planet-scale SIEM with built-in threat intelligence enrichment.',
+        costPerMillionEvents: 26,
+        realmOptimization: 0.35,
+    },
+    {
+        id: 'exabeam-fusion-siem',
+        label: 'Exabeam Fusion SIEM',
+        description: 'Behavioral analytics-driven SIEM with UEBA correlation.',
+        costPerMillionEvents: 25,
+        realmOptimization: 0.34,
+    },
+    {
+        id: 'rapid7-insightidr',
+        label: 'Rapid7 InsightIDR',
+        description: 'Cloud SIEM with integrated threat detection and response.',
+        costPerMillionEvents: 24,
+        realmOptimization: 0.33,
+    },
+    {
+        id: 'elastic-security-siem',
+        label: 'Elastic Security SIEM',
+        description: 'Elastic Stack-based SIEM with detection rules and cases.',
+        costPerMillionEvents: 22,
+        realmOptimization: 0.32,
+    },
+    {
+        id: 'logrhythm-nextgen',
+        label: 'LogRhythm NextGen SIEM',
+        description: 'Analytics-centric SIEM and SOAR platform.',
+        costPerMillionEvents: 25,
+        realmOptimization: 0.33,
+    },
+    {
+        id: 'arcsight-esm',
+        label: 'ArcSight Enterprise Security Manager',
+        description: 'Micro Focus ArcSight correlation and compliance platform.',
+        costPerMillionEvents: 30,
+        realmOptimization: 0.34,
+    },
+    {
+        id: 'fortinet-fortisiem',
+        label: 'Fortinet FortiSIEM',
+        description: 'Hybrid SIEM with integrated performance and security monitoring.',
+        costPerMillionEvents: 23,
+        realmOptimization: 0.31,
+    },
+    {
+        id: 'rsa-netwitness',
+        label: 'RSA NetWitness Platform',
+        description: 'Network and endpoint-focused SIEM with threat hunting.',
+        costPerMillionEvents: 28,
+        realmOptimization: 0.34,
+    },
+    {
+        id: 'att-cybersecurity-usm',
+        label: 'AT&T Cybersecurity USM Anywhere',
+        description: 'Cloud SIEM with integrated asset discovery and orchestration.',
+        costPerMillionEvents: 22,
+        realmOptimization: 0.3,
+    },
+    {
+        id: 'securonix-next-gen',
+        label: 'Securonix Next-Gen SIEM',
+        description: 'Cloud-native SIEM with UEBA and threat content subscriptions.',
+        costPerMillionEvents: 27,
+        realmOptimization: 0.36,
+    },
+    {
+        id: 'devo-security-operations',
+        label: 'Devo Security Operations',
+        description: 'High-volume cloud SIEM with real-time analytics.',
+        costPerMillionEvents: 25,
+        realmOptimization: 0.35,
+    },
+    {
+        id: 'graylog-security-enterprise',
+        label: 'Graylog Security Enterprise',
+        description: 'Log analytics and SIEM tailored for modern security teams.',
+        costPerMillionEvents: 21,
+        realmOptimization: 0.3,
+    },
+    {
+        id: 'hunters-soc-platform',
+        label: 'Hunters SOC Platform',
+        description: 'Cloud-native SIEM with autonomous detection engineering.',
+        costPerMillionEvents: 23,
+        realmOptimization: 0.33,
+    },
+    {
+        id: 'blumira-siem',
+        label: 'Blumira Automated SIEM',
+        description: 'Managed SIEM delivering automated detection and response.',
+        costPerMillionEvents: 20,
+        realmOptimization: 0.29,
+    },
+    {
+        id: 'logpoint-siem',
+        label: 'LogPoint SIEM',
+        description: 'European-built SIEM with UEBA and SOAR modules.',
+        costPerMillionEvents: 22,
+        realmOptimization: 0.31,
+    },
+    {
+        id: 'netsurion-eventtracker',
+        label: 'Netsurion EventTracker',
+        description: 'Co-managed SIEM for distributed enterprises and MSPs.',
+        costPerMillionEvents: 21,
+        realmOptimization: 0.3,
+    },
+];
+const formatCurrency = (value) => new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: value < 100 ? 2 : 0,
+}).format(value);
+const formatNumber = (value) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value);
+const calculate = ({ source, destination, dailyTraffic }) => {
+    const monthlyEvents = dailyTraffic * DAYS_PER_MONTH;
+    const millions = monthlyEvents / 1000000;
+    const standardRatePerMillion = source.costPerMillionEvents + destination.costPerMillionEvents;
+    const standardCost = millions * standardRatePerMillion;
+    const averageOptimization = Math.min(0.65, (source.realmOptimization + destination.realmOptimization) / 2);
+    const optimizedRatePerMillion = standardRatePerMillion * (1 - averageOptimization);
+    const realmCost = millions * (optimizedRatePerMillion + REALM_PLATFORM_FEE_PER_MILLION);
+    const savings = standardCost - realmCost;
+    const savingsPercentage = standardCost > 0 ? (savings / standardCost) * 100 : 0;
+    return {
+        monthlyEvents,
+        standardCost,
+        realmCost,
+        savings,
+        savingsPercentage,
+        standardRatePerMillion,
+        optimizedRatePerMillion,
+        averageOptimization,
+    };
+};
+const sourceSelect = document.querySelector('#sourceSelect');
+const destinationSelect = document.querySelector('#destinationSelect');
+const trafficInput = document.querySelector('#trafficInput');
+const sourceSummary = document.querySelector('#sourceSummary');
+const destinationSummary = document.querySelector('#destinationSummary');
+const trafficError = document.querySelector('#trafficError');
+const monthlyEventsEl = document.querySelector('#monthlyEvents');
+const standardCostEl = document.querySelector('#standardCost');
+const realmCostEl = document.querySelector('#realmCost');
+const savingsEl = document.querySelector('#savings');
+const standardBreakdownEl = document.querySelector('#standardBreakdown');
+const realmBreakdownEl = document.querySelector('#realmBreakdown');
+const savingsPercentEl = document.querySelector('#savingsPercent');
+const assertElement = (value, label) => {
+    if (value === null) {
+        throw new Error(`${label} element was not found in the document`);
+    }
+    return value;
+};
+const requiredSourceSelect = assertElement(sourceSelect, 'Source select');
+const requiredDestinationSelect = assertElement(destinationSelect, 'Destination select');
+const requiredTrafficInput = assertElement(trafficInput, 'Traffic input');
+const requiredSourceSummary = assertElement(sourceSummary, 'Source summary');
+const requiredDestinationSummary = assertElement(destinationSummary, 'Destination summary');
+const requiredTrafficError = assertElement(trafficError, 'Traffic error');
+const requiredMonthlyEvents = assertElement(monthlyEventsEl, 'Monthly events');
+const requiredStandardCost = assertElement(standardCostEl, 'Standard cost');
+const requiredRealmCost = assertElement(realmCostEl, 'Realm cost');
+const requiredSavings = assertElement(savingsEl, 'Savings');
+const requiredStandardBreakdown = assertElement(standardBreakdownEl, 'Standard breakdown');
+const requiredRealmBreakdown = assertElement(realmBreakdownEl, 'Realm breakdown');
+const requiredSavingsPercent = assertElement(savingsPercentEl, 'Savings percent');
+const populateSelect = (select, items) => {
+    select.innerHTML = '';
+    for (const endpoint of items) {
+        const option = document.createElement('option');
+        option.value = endpoint.id;
+        option.textContent = endpoint.label;
+        select.appendChild(option);
+    }
+};
+const getEndpoint = (list, id) => {
+    const endpoint = list.find((item) => item.id === id);
+    if (!endpoint) {
+        throw new Error(`Unknown endpoint id: ${id}`);
+    }
+    return endpoint;
+};
+const renderSummary = (element, endpoint) => {
+    element.textContent = `${endpoint.description} • ${formatCurrency(endpoint.costPerMillionEvents)} per million events`;
+};
+const update = () => {
+    const source = getEndpoint(sources, requiredSourceSelect.value);
+    const destination = getEndpoint(destinations, requiredDestinationSelect.value);
+    renderSummary(requiredSourceSummary, source);
+    renderSummary(requiredDestinationSummary, destination);
+    const rawTraffic = requiredTrafficInput.value.trim();
+    const parsedTraffic = rawTraffic === '' ? 0 : Number.parseFloat(rawTraffic);
+    if (!Number.isFinite(parsedTraffic) || parsedTraffic < 0) {
+        requiredTrafficError.textContent = 'Enter a positive number of daily events.';
+        requiredMonthlyEvents.textContent = '—';
+        requiredStandardCost.textContent = '—';
+        requiredRealmCost.textContent = '—';
+        requiredSavings.textContent = '—';
+        requiredStandardBreakdown.textContent = '';
+        requiredRealmBreakdown.textContent = '';
+        requiredSavingsPercent.textContent = '';
+        return;
+    }
+    requiredTrafficError.textContent = '';
+    const { monthlyEvents, standardCost, realmCost, savings, savingsPercentage, standardRatePerMillion, optimizedRatePerMillion, averageOptimization, } = calculate({
+        source,
+        destination,
+        dailyTraffic: parsedTraffic,
+    });
+    requiredMonthlyEvents.textContent = formatNumber(monthlyEvents);
+    requiredStandardCost.textContent = formatCurrency(Math.max(0, standardCost));
+    requiredRealmCost.textContent = formatCurrency(Math.max(0, realmCost));
+    requiredSavings.textContent = formatCurrency(savings);
+    requiredStandardBreakdown.textContent = `(${formatCurrency(standardRatePerMillion)} per million events)`;
+    requiredRealmBreakdown.textContent = `Realm reduces blended costs by ${(averageOptimization * 100).toFixed(0)}% to ${formatCurrency(optimizedRatePerMillion)} per million events and adds a ${formatCurrency(REALM_PLATFORM_FEE_PER_MILLION)} platform fee per million.`;
+    requiredSavingsPercent.textContent = savingsPercentage
+        ? `${savingsPercentage >= 0 ? '≈' : 'Increase of'} ${Math.abs(savingsPercentage).toFixed(1)}%`
+        : 'No savings at current volume.';
+};
+const initialize = () => {
+    populateSelect(requiredSourceSelect, sources);
+    populateSelect(requiredDestinationSelect, destinations);
+    requiredSourceSelect.value = sources[0]?.id ?? '';
+    requiredDestinationSelect.value = destinations[0]?.id ?? '';
+    requiredTrafficInput.value = '25000';
+    update();
+};
+requiredSourceSelect.addEventListener('change', update);
+requiredDestinationSelect.addEventListener('change', update);
+requiredTrafficInput.addEventListener('input', () => {
+    update();
+});
+initialize();
