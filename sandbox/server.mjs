@@ -37,7 +37,9 @@ function resolveFilePath(requestPath) {
   const candidate = normalized === '/' ? DEFAULT_ENTRY : normalized.replace(/^\/+/, '');
   const resolved = path.resolve(projectRoot, candidate);
 
-  if (!resolved.startsWith(projectRoot)) {
+  const relative = path.relative(projectRoot, resolved);
+
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
     return null;
   }
 
