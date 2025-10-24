@@ -34,7 +34,11 @@ function sanitizeRequestUrl(url) {
 
 function resolveFilePath(requestPath) {
   const normalized = path.normalize(requestPath);
-  const candidate = normalized === '/' ? DEFAULT_ENTRY : normalized.replace(/^\/+/, '');
+  const isRoot =
+    normalized === '/' ||
+    normalized === '\\' ||
+    normalized === path.sep;
+  const candidate = isRoot ? DEFAULT_ENTRY : normalized.replace(/^[\\/]+/, '');
   const resolved = path.resolve(projectRoot, candidate);
 
   const relative = path.relative(projectRoot, resolved);

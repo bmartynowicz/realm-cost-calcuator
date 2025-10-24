@@ -80,12 +80,37 @@
                 placeholder="e.g. 25000"
                 aria-describedby="trafficHelp trafficError"
               />
-              <span class="field__addon">events</span>
+              <div class="field__addon field__addon--select">
+                <select id="trafficUnit" class="field__addon__control" aria-label="Traffic unit">
+                  <option value="events">Events</option>
+                  <option value="gigabytes">Gigabytes</option>
+                  <option value="terabytes">Terabytes</option>
+                </select>
+              </div>
             </div>
             <span id="trafficHelp" class="field__hint"
-              >We project monthly totals by multiplying daily volume by 30.</span
+              >Switch between events or data volume. Monthly totals assume 30 days.</span
             >
             <span id="trafficError" class="field__error" role="alert"></span>
+          </label>
+          <label class="field field--hidden" data-role="event-size-field">
+            <span class="field__label">Average event size</span>
+            <div class="field__input field__input--with-addon field__input--with-addon-right">
+              <input
+                type="number"
+                id="eventSizeInput"
+                name="eventSize"
+                inputmode="decimal"
+                min="0"
+                step="0.1"
+                placeholder="e.g. 1.5"
+                aria-describedby="eventSizeHelp trafficError"
+              />
+              <span class="field__addon field__addon--unit">KB</span>
+            </div>
+            <span id="eventSizeHelp" class="field__hint"
+              >Used to convert gigabytes or terabytes into events. Defaults to 1 KB if left blank.</span
+            >
           </label>
         </section>
 
@@ -100,21 +125,22 @@
           <dl class="metrics">
             <div class="metrics__item">
               <dt class="metrics__label">Monthly events</dt>
-              <dd class="metrics__value" id="monthlyEvents">—</dd>
+              <dd class="metrics__value" id="monthlyEvents">--</dd>
             </div>
             <div class="metrics__item">
               <dt class="metrics__label">Standard integration cost</dt>
-              <dd class="metrics__value" id="standardCost">—</dd>
+              <dd class="metrics__value" id="standardCost">--</dd>
               <dd class="metrics__description" id="standardBreakdown"></dd>
             </div>
             <div class="metrics__item">
               <dt class="metrics__label">Realm optimized cost</dt>
-              <dd class="metrics__value metrics__value--highlight" id="realmCost">—</dd>
+              <dd class="metrics__value metrics__value--highlight" id="realmCost">--</dd>
               <dd class="metrics__description" id="realmBreakdown"></dd>
+              <dd class="metrics__description field--hidden" id="calibrationNote"></dd>
             </div>
             <div class="metrics__item metrics__item--savings">
               <dt class="metrics__label">Projected monthly savings</dt>
-              <dd class="metrics__value" id="savings">—</dd>
+              <dd class="metrics__value" id="savings">--</dd>
               <dd class="metrics__description" id="savingsPercent"></dd>
             </div>
           </dl>
@@ -131,3 +157,4 @@
     <script type="module" src="./src/main.js"></script>
   </body>
 </html>
+

@@ -4,6 +4,41 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Realm Cost Calculator</title>
+    <meta
+      name="description"
+      content="Realm Cost Calculator helps security and data teams estimate ingestion and egress costs across 50 enterprise data sources and 20 SIEM destinations."
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta property="og:site_name" content="Realm" />
+    <meta
+      property="og:title"
+      content="Realm Cost Calculator | Estimate Data Integration Spend"
+    />
+    <meta
+      property="og:description"
+      content="Instantly model traditional integration costs versus Realm's optimized pricing and quantify projected savings before you ship telemetry."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://realm.build/realm-cost-calculator" />
+    <meta
+      property="og:image"
+      content="https://realm.build/assets/realm-cost-calculator-preview.png"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Realm Cost Calculator | Estimate Data Integration Spend"
+    />
+    <meta
+      name="twitter:description"
+      content="Discover how much you can save by routing enterprise telemetry through Realm's unified pipeline."
+    />
+    <meta
+      name="twitter:image"
+      content="https://realm.build/assets/realm-cost-calculator-preview.png"
+    />
+    <link rel="canonical" href="https://realm.build/realm-cost-calculator" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -11,8 +46,64 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/src/styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "name": "Realm Cost Calculator",
+            "applicationCategory": "BusinessApplication",
+            "applicationSubCategory": "SecurityAnalytics",
+            "operatingSystem": "Web",
+            "description": "Interactive calculator for projecting Realm integration costs against traditional data pipelines across popular SIEM and observability platforms.",
+            "url": "https://realm.build/realm-cost-calculator",
+            "provider": {
+              "@type": "Organization",
+              "name": "Realm",
+              "url": "https://realm.build"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "How accurate are the Realm Cost Calculator estimates?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "The calculator combines published pricing for data egress, ingestion, and Realm platform rates to produce planning-grade estimates. Final proposals factor in your retention goals, regional constraints, and negotiated enterprise agreements."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Which data sources and SIEM platforms are supported?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Realm maintains pricing data for 50+ enterprise sources—such as Okta, CrowdStrike, and Palo Alto Networks—and the 20 most common SIEM and observability destinations, including Splunk, Microsoft Sentinel, and Sumo Logic."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I export Realm Cost Calculator scenarios?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. After modeling your volumes you can export a summary to share with finance or procurement, and our team can help translate the scenario into a custom contract."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
     <div class="app-shell">
       <header class="hero">
         <div class="hero__content">
@@ -29,7 +120,7 @@
         </div>
       </header>
 
-      <main class="layout">
+      <main class="layout" id="mainContent">
         <section class="panel" aria-labelledby="source-heading">
           <div class="panel__header">
             <h2 class="panel__title" id="source-heading">Source configuration</h2>
@@ -80,12 +171,37 @@
                 placeholder="e.g. 25000"
                 aria-describedby="trafficHelp trafficError"
               />
-              <span class="field__addon">events</span>
+              <div class="field__addon field__addon--select">
+                <select id="trafficUnit" class="field__addon__control" aria-label="Traffic unit">
+                  <option value="events">Events</option>
+                  <option value="gigabytes">Gigabytes</option>
+                  <option value="terabytes">Terabytes</option>
+                </select>
+              </div>
             </div>
             <span id="trafficHelp" class="field__hint"
-              >We project monthly totals by multiplying daily volume by 30.</span
+              >Switch between events or data volume. Monthly totals assume 30 days.</span
             >
             <span id="trafficError" class="field__error" role="alert"></span>
+          </label>
+          <label class="field field--hidden" data-role="event-size-field">
+            <span class="field__label">Average event size</span>
+            <div class="field__input field__input--with-addon field__input--with-addon-right">
+              <input
+                type="number"
+                id="eventSizeInput"
+                name="eventSize"
+                inputmode="decimal"
+                min="0"
+                step="0.1"
+                placeholder="e.g. 1.5"
+                aria-describedby="eventSizeHelp trafficError"
+              />
+              <span class="field__addon field__addon--unit">KB</span>
+            </div>
+            <span id="eventSizeHelp" class="field__hint"
+              >Used to convert gigabytes or terabytes into events. Defaults to 1 KB if left blank.</span
+            >
           </label>
         </section>
 
@@ -100,24 +216,108 @@
           <dl class="metrics">
             <div class="metrics__item">
               <dt class="metrics__label">Monthly events</dt>
-              <dd class="metrics__value" id="monthlyEvents">—</dd>
+              <dd class="metrics__value" id="monthlyEvents">--</dd>
             </div>
             <div class="metrics__item">
               <dt class="metrics__label">Standard integration cost</dt>
-              <dd class="metrics__value" id="standardCost">—</dd>
+              <dd class="metrics__value" id="standardCost">--</dd>
               <dd class="metrics__description" id="standardBreakdown"></dd>
             </div>
             <div class="metrics__item">
               <dt class="metrics__label">Realm optimized cost</dt>
-              <dd class="metrics__value metrics__value--highlight" id="realmCost">—</dd>
+              <dd class="metrics__value metrics__value--highlight" id="realmCost">--</dd>
               <dd class="metrics__description" id="realmBreakdown"></dd>
+              <dd class="metrics__description field--hidden" id="calibrationNote"></dd>
             </div>
             <div class="metrics__item metrics__item--savings">
               <dt class="metrics__label">Projected monthly savings</dt>
-              <dd class="metrics__value" id="savings">—</dd>
+              <dd class="metrics__value" id="savings">--</dd>
               <dd class="metrics__description" id="savingsPercent"></dd>
             </div>
           </dl>
+        </section>
+
+        <section class="panel panel--longform rich-text" aria-labelledby="how-it-works-heading">
+          <div class="panel__header">
+            <h2 class="panel__title" id="how-it-works-heading">How the calculator works</h2>
+            <p class="panel__subtitle">
+              Blend your telemetry volumes with vendor egress tables and Realm's optimized routing to quickly spot cost deltas.
+            </p>
+          </div>
+          <article>
+            <h3>Model your current stack</h3>
+            <p>
+              Start by selecting the systems that emit your high-volume logs. The dataset includes cloud infrastructure,
+              identity platforms, endpoint detection, firewall appliances, and SaaS security tools. Realm keeps pricing
+              information updated so you can evaluate egress charges without chasing vendor PDFs.
+            </p>
+            <h3>Compare Realm against traditional ingestion</h3>
+            <p>
+              Enter your average daily volume in events or raw data. Realm automatically converts volume to monthly totals,
+              applies Realm optimization, and shows side-by-side cost projections for standard integration pipelines versus
+              Realm's managed routing.
+            </p>
+            <h3>Share data-backed forecasts</h3>
+            <p>
+              Use the projections to brief security leadership, finance, or procurement on projected savings. Adjust the
+              assumptions as your telemetry mix evolves to keep forecasts aligned with reality.
+            </p>
+          </article>
+        </section>
+
+        <section class="panel panel--longform rich-text" aria-labelledby="use-cases-heading">
+          <div class="panel__header">
+            <h2 class="panel__title" id="use-cases-heading">Who benefits from Realm's pricing model</h2>
+            <p class="panel__subtitle">
+              Teams that rely on high-volume security telemetry gain immediate clarity on the ROI of Realm's unified pipeline.
+            </p>
+          </div>
+          <article>
+            <ul>
+              <li><strong>Security operations leaders</strong> validate SIEM ingestion budgets before migrating new log sources.</li>
+              <li><strong>Detection engineers</strong> balance retention requirements with ingestion tiers to avoid surprise overruns.</li>
+              <li><strong>Finance and procurement partners</strong> benchmark Realm proposals against multi-year contracts they manage.</li>
+              <li><strong>Service providers and MSSPs</strong> model customer-by-customer volumes to package Realm-powered offerings.</li>
+            </ul>
+            <p>
+              Realm centralizes telemetry collection, normalizes formats, and orchestrates delivery to multiple destinations.
+              The calculator reflects those efficiencies so you can quantify savings ahead of implementation.
+            </p>
+          </article>
+        </section>
+
+        <section class="panel panel--longform rich-text" aria-labelledby="faq-heading" id="faq">
+          <div class="panel__header">
+            <h2 class="panel__title" id="faq-heading">Realm Cost Calculator FAQ</h2>
+            <p class="panel__subtitle">
+              Answers to common questions from security, data, and finance teams evaluating Realm.
+            </p>
+          </div>
+          <div class="faq">
+            <article class="faq__item">
+              <h3 class="faq__question">How accurate are the Realm Cost Calculator estimates?</h3>
+              <p class="faq__answer">
+                The tool combines publicly available egress pricing, published SIEM ingestion tiers, and Realm's own platform
+                rates. Estimates are intentionally conservative and serve as a planning baseline before we tailor a proposal to
+                your retention and regional needs.
+              </p>
+            </article>
+            <article class="faq__item">
+              <h3 class="faq__question">Which data sources and SIEM destinations can I model?</h3>
+              <p class="faq__answer">
+                You can choose from 50+ enterprise-grade sources and the top 20 SIEM or observability platforms. This includes
+                providers such as AWS CloudTrail, CrowdStrike, Okta, Palo Alto Networks, Splunk, Microsoft Sentinel, and Sumo
+                Logic. New integrations are added frequently.
+              </p>
+            </article>
+            <article class="faq__item">
+              <h3 class="faq__question">What happens after I find a scenario that works?</h3>
+              <p class="faq__answer">
+                Export the summary for your stakeholders and connect with the Realm team. We will validate assumptions, factor in
+                negotiated discounts, and map a migration plan that keeps compliance and retention requirements intact.
+              </p>
+            </article>
+          </div>
         </section>
       </main>
 
@@ -131,3 +331,4 @@
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
+

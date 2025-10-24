@@ -146,7 +146,14 @@ export const sources = [
         label: 'Palo Alto Networks Next-Generation Firewall',
         description: 'Threat, traffic, and URL filtering logs from PAN-OS.',
         costPerMillionEvents: 27,
-        realmOptimization: 0.37,
+        realmOptimization: 0.6, // 30-day Realm dataset measured 60% volume reduction
+    },
+    {
+        id: 'infoblox-bloxone-ddi',
+        label: 'Infoblox BloxOne DDI',
+        description: 'DNS, DHCP, and IP address management telemetry from BloxOne DDI.',
+        costPerMillionEvents: 20,
+        realmOptimization: 0.71, // 30-day Realm dataset measured 71% volume reduction
     },
     {
         id: 'cisco-secure-firewall',
@@ -160,7 +167,7 @@ export const sources = [
         label: 'Fortinet FortiGate',
         description: 'Unified threat management events from FortiGate appliances.',
         costPerMillionEvents: 23,
-        realmOptimization: 0.34,
+        realmOptimization: 0.75, // Vensure case study reports 75% reduction w/ Realm Focus
     },
     {
         id: 'checkpoint-quantum',
@@ -188,7 +195,7 @@ export const sources = [
         label: 'Cisco Umbrella Secure Internet Gateway',
         description: 'DNS-layer security and secure web gateway telemetry.',
         costPerMillionEvents: 20,
-        realmOptimization: 0.32,
+        realmOptimization: 0.44, // Vensure case study reports 44% reduction
     },
     {
         id: 'cloudflare-gateway',
