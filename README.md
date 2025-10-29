@@ -7,6 +7,16 @@ telemetry plus the top 20 SIEM destinations, enter expected daily traffic, and
 immediately compare traditional integration spend versus Realm's optimized
 approach.
 
+## Feature highlights
+
+- Organization size presets auto-populate daily traffic and average event size baselines. See
+  [`docs/traffic-baselines.md`](docs/traffic-baselines.md) for the research notes behind each band.
+- Executive summary PDF export packages the current scenario for finance or procurement stakeholders.
+- Competitive benchmarking compares Realm to a gated Cribl estimate that unlocks with a verified work email.
+- Updated data catalog and supporting research samples live under [`research/`](research/), making it easy to
+  trace every assumption back to a published source.
+- Automated Playwright QA runs critical journeys (traffic presets, Cribl gating, and validation) on each build.
+
 ## Getting started
 
 The project uses [Vite](https://vitejs.dev/) with a TypeScript entry point for a fast
@@ -34,6 +44,9 @@ npm run build
 
 # Preview the production build locally
 npm run preview
+
+# Run the headless QA suite
+npm run qa
 ```
 
 Once the dev server is running, open the printed localhost URL to explore the calculator.
@@ -68,15 +81,22 @@ environment variable if you need a different port.
   latest commit (`git pull` or re-checkout the repository). The sandbox command lives in
   the root `package.json`.
 - You can always bypass npm scripts entirely by running `node sandbox/server.mjs` from
-  the project root — the server has no external dependencies.
+  the project root - the server has no external dependencies.
 
 ## Project structure
 
 ```
-index.html          # Application shell and layout
-src/main.ts         # Calculator logic and DOM bindings
-src/data/catalog.ts # Shared catalog of sources and SIEM destinations
-src/styles.css      # Global styling for the single-page experience
+index.html                   # Application shell served by Vite
+preview.html                 # Static preview wired to the compiled JS bundle
+public/realm-cost-flow.svg   # High-level integration flow for demos and docs
+src/main.ts                  # Calculator logic and DOM bindings
+src/data/catalog.ts          # Shared catalog of sources and SIEM destinations
+src/data/traffic-profiles.ts # Organization size traffic baselines
+src/styles.css               # Global styling for the single-page experience
+docs/traffic-baselines.md    # Research notes backing the new presets
+docs/CHANGELOG.md         # Narrative history of recent changes
+research/                    # Sample payloads and telemetry references
+tests/                       # Playwright QA scenarios (run with `npm run qa`)
 ```
 
 Static assets placed in `public/` are copied as-is to the output directory during builds.
@@ -86,6 +106,27 @@ Static assets placed in `public/` are copied as-is to the output directory durin
 The pricing assumptions live in `src/data/catalog.ts`, which exports the 50-entry
 `sources` array and top-20 `destinations` array. Adjust the per-million event pricing or
 optimization percentages to fit your data contracts, and tweak the
-`REALM_PLATFORM_FEE_PER_MILLION` constant in `src/main.ts` to reflect your Realm platform
-agreement. After editing the TypeScript catalog, rerun `tsc --pretty false` so the
-compiled JavaScript modules used by `preview.html` and the sandbox server stay in sync.
+`REALM_PLATFORM_FEE_PER_MILLION` constant in `src/main.ts` (and the mirrored values in
+`src/data/cost-model.ts`) to reflect your Realm platform agreement.
+
+Organization size presets and traffic baselines are defined in
+`src/data/traffic-profiles.ts` and documented in
+[`docs/traffic-baselines.md`](docs/traffic-baselines.md). Update both the code and the
+research note whenever you calibrate those defaults.
+
+After editing the TypeScript sources, run `npm run build` so the compiled JavaScript used
+by `preview.html` and the sandbox server stays in sync, and execute `npm run qa` to
+confirm the UI flows still pass the automated checks.
+
+## Quality assurance
+
+The repository includes a headless Playwright suite that spins up the Vite dev server and
+tests critical calculator flows:
+
+```bash
+npm run qa
+```
+
+The scenarios cover traffic presets, Cribl benchmark gating, and validation around the
+executive summary export. Review the generated traces in `playwright-report/` if a test
+fails during local development or CI.

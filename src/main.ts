@@ -31,6 +31,8 @@ const MAX_REALM_OPTIMIZATION = 0.75;
 const LEGACY_PIPELINE_OVERHEAD_PER_MILLION = 12;
 const CRIBL_MARKUP_RATE = 0.18;
 const CRIBL_PLATFORM_FEE_PER_MILLION = 12;
+const CRIBL_REVEAL_LABEL = 'Enter work email to unlock';
+const CRIBL_UNLOCKED_LABEL = 'Cribl estimate unlocked';
 const WORK_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
 const CONSUMER_EMAIL_DOMAINS = new Set([
   'gmail.com',
@@ -328,17 +330,21 @@ const updateCriblDisplay = (formattedCost: string) => {
     return;
   }
 
-  criblUi.cost.textContent = formattedCost;
+  const displayValue = hasUnlockedCriblEstimate ? formattedCost : '--';
+  criblUi.cost.textContent = displayValue;
+  criblUi.cost.setAttribute('data-unlocked', hasUnlockedCriblEstimate ? 'true' : 'false');
   if (hasUnlockedCriblEstimate) {
     criblUi.button.dataset.preview = '';
     criblUi.button.classList.add('metrics__veil-button--unlocked');
     criblUi.button.disabled = true;
     criblUi.button.setAttribute('aria-hidden', 'true');
+    criblUi.button.textContent = CRIBL_UNLOCKED_LABEL;
   } else {
     criblUi.button.dataset.preview = formattedCost;
     criblUi.button.classList.remove('metrics__veil-button--unlocked');
     criblUi.button.disabled = false;
     criblUi.button.removeAttribute('aria-hidden');
+    criblUi.button.textContent = CRIBL_REVEAL_LABEL;
   }
 };
 
@@ -391,6 +397,10 @@ const unlockCriblEstimate = () => {
   criblUi.button.setAttribute('aria-hidden', 'true');
   criblUi.button.dataset.preview = '';
   criblUi.button.blur();
+  const snapshotCost = lastSnapshot
+    ? formatCurrency(Math.max(0, lastSnapshot.criblCost))
+    : '--';
+  updateCriblDisplay(snapshotCost);
 };
 
 const populateSelect = (select: HTMLSelectElement, items: Endpoint[]) => {

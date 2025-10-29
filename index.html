@@ -85,7 +85,7 @@
                 "name": "Which data sources and SIEM platforms are supported?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Realm maintains pricing data for 50+ enterprise sources—such as Okta, CrowdStrike, and Palo Alto Networks—and the 20 most common SIEM and observability destinations, including Splunk, Microsoft Sentinel, and Sumo Logic."
+                  "text": "Realm maintains pricing data for 50+ enterprise sources - such as Okta, CrowdStrike, and Palo Alto Networks - and the 20 most common SIEM and observability destinations, including Splunk, Microsoft Sentinel, and Sumo Logic."
                 }
               },
               {
@@ -251,6 +251,65 @@
               <dd class="metrics__description" id="savingsPercent"></dd>
             </div>
           </dl>
+          <div class="metrics__actions" aria-labelledby="results-heading">
+            <div class="metrics__item metrics__item--action metrics__item--export">
+              <h3 class="metrics__actions-title">Share this scenario</h3>
+              <p class="metrics__actions-copy">
+                Download a polished PDF to brief stakeholders or attach to planning docs.
+              </p>
+              <button
+                type="button"
+                class="metrics__export-button"
+                data-role="export-pdf-button"
+              >
+                Download executive summary PDF
+              </button>
+            </div>
+            <div class="metrics__item metrics__item--action metrics__item--comparison">
+              <h3 class="metrics__actions-title">Benchmark against Cribl</h3>
+              <p class="metrics__actions-copy">
+                Unlock an estimated Cribl cost to keep competitive analyses in the same view.
+              </p>
+              <p
+                class="metrics__benchmark-value"
+                id="criblCost"
+                aria-live="polite"
+                data-unlocked="false"
+              >
+                --
+              </p>
+              <button
+                type="button"
+                class="metrics__veil-button"
+                data-role="cribl-reveal-button"
+                aria-controls="criblRevealForm"
+                aria-expanded="false"
+              >
+                Enter work email to unlock
+              </button>
+              <div class="metrics__reveal field--hidden" id="criblRevealForm">
+                <form class="metrics__reveal-form" data-role="cribl-reveal-form" novalidate>
+                  <label class="field">
+                    <span class="field__label">Work email</span>
+                    <input
+                      id="criblEmailInput"
+                      type="email"
+                      inputmode="email"
+                      name="criblEmail"
+                      class="field__input"
+                      autocomplete="email"
+                      placeholder="you@company.com"
+                      required
+                    />
+                  </label>
+                  <button type="submit" class="metrics__reveal-submit">
+                    Unlock estimate
+                  </button>
+                </form>
+                <p class="field__error field--hidden" data-role="cribl-error-message"></p>
+              </div>
+            </div>
+          </div>
         </section>
 
         <section class="panel panel--longform rich-text" aria-labelledby="how-it-works-heading">

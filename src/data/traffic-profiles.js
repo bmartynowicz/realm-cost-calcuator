@@ -102,6 +102,6 @@ export const describeTrafficRecommendation = (recommendation) => {
             : `${dailyGb.toLocaleString(undefined, { maximumFractionDigits: 2 })} GB`;
     return [
         `${categoryLabels[category]} baseline for ${organizationSize.shortLabel.toLowerCase()}:`,
-        `≈ ${dailyEvents.toLocaleString()} events/day (${volumeDisplay} at ${averageEventSizeKb.toFixed(1)} KB per event).`,
+        `Approximately ${dailyEvents.toLocaleString()} events/day (${volumeDisplay} at ${averageEventSizeKb.toFixed(1)} KB per event).`,
     ].join(' ');
 };

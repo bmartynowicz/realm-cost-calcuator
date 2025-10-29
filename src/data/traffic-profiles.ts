@@ -147,6 +147,8 @@ export const describeTrafficRecommendation = (recommendation: TrafficRecommendat
 
   return [
     `${categoryLabels[category]} baseline for ${organizationSize.shortLabel.toLowerCase()}:`,
-    `≈ ${dailyEvents.toLocaleString()} events/day (${volumeDisplay} at ${averageEventSizeKb.toFixed(1)} KB per event).`,
+    `Approximately ${dailyEvents.toLocaleString()} events/day (${volumeDisplay} at ${averageEventSizeKb.toFixed(
+      1,
+    )} KB per event).`,
   ].join(' ');
 };

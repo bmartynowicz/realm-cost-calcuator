@@ -30,7 +30,7 @@ export const sources = [
         unitCostPerMillion: 18,
         freeTier: {
             includedEventsPerMonth: 8000000,
-            notes: '10 GB egress ≈ 8M 1 KB events before overage is charged.',
+            notes: '10 GB egress is roughly 8M 1 KB events before overage is charged.',
         },
         realmReduction: {
             factor: 0.32,
