@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="560" viewBox="0 0 1120 560">
+  <defs>
+    <style>
+      text {
+        font-family: "Segoe UI", Arial, sans-serif;
+        fill: #102a43;
+      }
+
+      .title {
+        font-size: 28px;
+        font-weight: 600;
+      }
+
+      .subtitle {
+        font-size: 16px;
+        fill: #486581;
+      }
+
+      .phase {
+        fill: #f0f4f8;
+        stroke: #d9e2ec;
+        stroke-width: 2;
+        rx: 18;
+      }
+
+      .phase.realm {
+        fill: #dbeafe;
+        stroke: #3b82f6;
+      }
+
+      .phase.output {
+        fill: #d3f8e2;
+        stroke: #7bc47f;
+      }
+
+      .phase-title {
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .phase-body {
+        font-size: 15px;
+        fill: #334e68;
+      }
+
+      .pill {
+        fill: #f7d070;
+        stroke: #f0b429;
+        stroke-width: 2;
+        rx: 22;
+      }
+
+      .pill text {
+        font-size: 15px;
+        font-weight: 600;
+        fill: #7c4a03;
+      }
+
+      .note {
+        font-size: 13px;
+        fill: #627d98;
+      }
+
+      .annotation {
+        font-size: 13px;
+        fill: #0f609b;
+      }
+
+      .connector {
+        stroke: #829ab1;
+        stroke-width: 2;
+        fill: none;
+        marker-end: url(#arrow);
+      }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 z" fill="#829ab1"/>
+    </marker>
+  </defs>
+
+  <g transform="translate(60 60)">
+
+  <!-- Header -->
+  <rect x="0" y="0" width="1080" height="64" fill="#f8f9fb" stroke="#d9e2ec" stroke-width="2" rx="20"/>
+  <text x="24" y="40" class="title">Realm Cost Model Overview</text>
+  <text x="412" y="40" class="subtitle">How we translate customer telemetry into dollars and savings</text>
+
+  <!-- Override annotation -->
+  <text class="annotation" x="24" y="96">Example override: Fortinet FortiGate -> Sumo Logic SIEM calibrated to the Vensure case study.</text>
+
+  <!-- Phase panels -->
+  <rect class="phase" x="0" y="120" width="230" height="220"/>
+  <text class="phase-title" x="24" y="162">Catalog inputs</text>
+  <text class="phase-body" x="24" y="196">- Source price per million</text>
+  <text class="phase-body" x="24" y="220">- Destination price per million</text>
+  <text class="phase-body" x="24" y="244">- Realm reduction factor</text>
+  <text class="note" x="24" y="280">Pulled from published pricing</text>
+  <text class="note" x="24" y="302">Overrides add customer calibrations</text>
+
+  <rect class="phase" x="270" y="120" width="230" height="220"/>
+  <text class="phase-title" x="294" y="162">Traffic baseline</text>
+  <text class="phase-body" x="294" y="196">- User selects daily volume</text>
+  <text class="phase-body" x="294" y="220">- Optional GB/TB to events</text>
+  <text class="phase-body" x="294" y="244">- Normalize to monthly events</text>
+  <text class="note" x="294" y="280">Default payload size: 1 KB</text>
+  <text class="note" x="294" y="302">Adjustable when using data units</text>
+
+  <rect class="phase" x="540" y="120" width="230" height="220"/>
+  <text class="phase-title" x="564" y="162">Standard blend</text>
+  <text class="phase-body" x="564" y="196">- Add source + destination rate</text>
+  <text class="phase-body" x="564" y="220">- Multiply by monthly millions</text>
+  <text class="phase-body" x="564" y="244">- Benchmark incumbent spend</text>
+  <text class="note" x="564" y="280">Baseline used for savings deltas</text>
+
+  <rect class="phase realm" x="810" y="120" width="250" height="220"/>
+  <text class="phase-title" x="834" y="162">Realm optimization</text>
+  <text class="phase-body" x="834" y="196">- Average reductions across pair</text>
+  <text class="phase-body" x="834" y="220">- Cap at 75% unless overridden</text>
+  <text class="phase-body" x="834" y="244">- Add $7.50 platform fee per MM</text>
+  <text class="phase-body" x="834" y="268">- Compare to standard baseline</text>
+  <text class="note" x="834" y="304">Outputs savings $, % for stories</text>
+
+  <!-- Monthly events pill -->
+  <rect class="pill" x="280" y="360" width="400" height="70"/>
+  <text x="300" y="407">Monthly events = (daily volume * 30) / 1,000,000</text>
+
+  <!-- Deliverable callout -->
+  <rect class="phase output" x="720" y="360" width="320" height="110"/>
+  <text class="phase-title" x="744" y="388">Deliverable talking points</text>
+  <text class="phase-body" x="744" y="414">- Baseline spend to frame status quo</text>
+  <text class="phase-body" x="744" y="436">- Realm savings for marketing claims</text>
+  <text class="phase-body" x="744" y="458">- Data points to support messaging</text>
+
+  <!-- Connectors -->
+  <path class="connector" d="M230 230 H 270"/>
+  <path class="connector" d="M500 230 H 540"/>
+  <path class="connector" d="M770 230 H 810"/>
+  <path class="connector" d="M385 340 V 360"/>
+  <path class="connector" d="M655 340 V 360"/>
+  <path class="connector" d="M935 340 V 360"/>
+  <path class="connector" d="M680 390 H 720"/>
+  </g>
+</svg>

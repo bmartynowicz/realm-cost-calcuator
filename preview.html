@@ -68,6 +68,21 @@
             </p>
           </div>
           <label class="field">
+            <span class="field__label">Organization size</span>
+            <select
+              id="organizationSize"
+              class="field__input"
+              aria-describedby="organizationSizeHelp"
+            >
+              <option value="hundreds">Hundreds (100-999 employees)</option>
+              <option value="thousands">Thousands (1,000-9,999 employees)</option>
+              <option value="tens-of-thousands">Tens of thousands (10,000+ employees)</option>
+            </select>
+            <span id="organizationSizeHelp" class="field__hint"
+              >Select your employee band to prefill realistic daily traffic assumptions.</span
+            >
+          </label>
+          <label class="field">
             <span class="field__label">Average daily traffic</span>
             <div class="field__input field__input--with-addon">
               <input
@@ -112,6 +127,7 @@
               >Used to convert gigabytes or terabytes into events. Defaults to 1 KB if left blank.</span
             >
           </label>
+          <p class="field__hint" id="trafficRecommendation" data-role="traffic-recommendation"></p>
         </section>
 
         <section class="panel panel--accent" aria-labelledby="results-heading">

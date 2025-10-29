@@ -6,6 +6,7 @@ export const sources = [
         description: 'Account activity events captured across AWS services.',
         costPerMillionEvents: 18,
         realmOptimization: 0.35,
+        trafficCategory: 'cloud-infrastructure',
     },
     {
         id: 'aws-security-hub',
@@ -13,6 +14,7 @@ export const sources = [
         description: 'Consolidated AWS security findings and compliance insights.',
         costPerMillionEvents: 22,
         realmOptimization: 0.33,
+        trafficCategory: 'cloud-infrastructure',
     },
     {
         id: 'aws-guardduty',
@@ -20,6 +22,7 @@ export const sources = [
         description: 'Threat detection telemetry from GuardDuty detectors.',
         costPerMillionEvents: 26,
         realmOptimization: 0.39,
+        trafficCategory: 'cloud-infrastructure',
     },
     {
         id: 'aws-vpc-flow-logs',
@@ -27,6 +30,7 @@ export const sources = [
         description: 'Network flow records exported from VPC subnets and interfaces.',
         costPerMillionEvents: 14,
         realmOptimization: 0.27,
+        trafficCategory: 'network-security',
     },
     {
         id: 'azure-active-directory',
@@ -34,6 +38,7 @@ export const sources = [
         description: 'Sign-in and audit events from Entra ID tenants.',
         costPerMillionEvents: 19,
         realmOptimization: 0.33,
+        trafficCategory: 'identity',
     },
     {
         id: 'azure-activity-logs',
@@ -41,6 +46,7 @@ export const sources = [
         description: 'Subscription-level operations and service health records.',
         costPerMillionEvents: 17,
         realmOptimization: 0.3,
+        trafficCategory: 'cloud-infrastructure',
     },
     {
         id: 'azure-nsg-flow-logs',
@@ -48,6 +54,7 @@ export const sources = [
         description: 'Layer 4 flow metadata streamed from Azure network security groups.',
         costPerMillionEvents: 15,
         realmOptimization: 0.28,
+        trafficCategory: 'network-security',
     },
     {
         id: 'google-cloud-audit-logs',
@@ -55,6 +62,7 @@ export const sources = [
         description: 'Admin activity, data access, and system event logging.',
         costPerMillionEvents: 18,
         realmOptimization: 0.32,
+        trafficCategory: 'cloud-infrastructure',
     },
     {
         id: 'google-cloud-vpc-flow',
@@ -62,6 +70,7 @@ export const sources = [
         description: 'Flow telemetry emitted from Google Cloud VPC subnets.',
         costPerMillionEvents: 15,
         realmOptimization: 0.27,
+        trafficCategory: 'network-security',
     },
     {
         id: 'google-workspace',
@@ -69,6 +78,7 @@ export const sources = [
         description: 'Collaboration and authentication activity across Workspace apps.',
         costPerMillionEvents: 20,
         realmOptimization: 0.34,
+        trafficCategory: 'identity',
     },
     {
         id: 'okta',
@@ -76,6 +86,7 @@ export const sources = [
         description: 'Identity provider system logs and authentication events.',
         costPerMillionEvents: 23,
         realmOptimization: 0.38,
+        trafficCategory: 'identity',
     },
     {
         id: 'duo-security',
@@ -83,6 +94,7 @@ export const sources = [
         description: 'Multi-factor authentication access activity and anomalies.',
         costPerMillionEvents: 17,
         realmOptimization: 0.29,
+        trafficCategory: 'identity',
     },
     {
         id: 'pingfederate',
@@ -90,6 +102,7 @@ export const sources = [
         description: 'Federated SSO and token issuance audit logs.',
         costPerMillionEvents: 19,
         realmOptimization: 0.3,
+        trafficCategory: 'identity',
     },
     {
         id: 'onelogin',
@@ -97,6 +110,7 @@ export const sources = [
         description: 'Unified access management sign-in and provisioning events.',
         costPerMillionEvents: 18,
         realmOptimization: 0.31,
+        trafficCategory: 'identity',
     },
     {
         id: 'sailpoint-identitynow',
@@ -104,6 +118,7 @@ export const sources = [
         description: 'Identity governance lifecycle and certification logging.',
         costPerMillionEvents: 22,
         realmOptimization: 0.36,
+        trafficCategory: 'identity',
     },
     {
         id: 'microsoft-active-directory',
@@ -111,6 +126,7 @@ export const sources = [
         description: 'Domain controller security and replication event forwarding.',
         costPerMillionEvents: 16,
         realmOptimization: 0.27,
+        trafficCategory: 'identity',
     },
     {
         id: 'service-now',
@@ -118,6 +134,7 @@ export const sources = [
         description: 'Change, incident, and configuration item audit history.',
         costPerMillionEvents: 21,
         realmOptimization: 0.33,
+        trafficCategory: 'saas-business',
     },
     {
         id: 'github-audit-log',
@@ -125,6 +142,7 @@ export const sources = [
         description: 'Repository, user, and admin actions for GitHub organizations.',
         costPerMillionEvents: 18,
         realmOptimization: 0.29,
+        trafficCategory: 'saas-business',
     },
     {
         id: 'kubernetes-audit',
@@ -132,6 +150,7 @@ export const sources = [
         description: 'API server events captured from Kubernetes audit policies.',
         costPerMillionEvents: 14,
         realmOptimization: 0.26,
+        trafficCategory: 'cloud-infrastructure',
     },
     {
         id: 'vmware-vsphere',
@@ -139,6 +158,7 @@ export const sources = [
         description: 'Hypervisor lifecycle and configuration change logging.',
         costPerMillionEvents: 20,
         realmOptimization: 0.31,
+        trafficCategory: 'cloud-infrastructure',
     },
     // Network security telemetry
     {
@@ -146,14 +166,16 @@ export const sources = [
         label: 'Palo Alto Networks Next-Generation Firewall',
         description: 'Threat, traffic, and URL filtering logs from PAN-OS.',
         costPerMillionEvents: 27,
-        realmOptimization: 0.6, // 30-day Realm dataset measured 60% volume reduction
+        realmOptimization: 0.6,
+        trafficCategory: 'network-security', // 30-day Realm dataset measured 60% volume reduction
     },
     {
         id: 'infoblox-bloxone-ddi',
         label: 'Infoblox BloxOne DDI',
         description: 'DNS, DHCP, and IP address management telemetry from BloxOne DDI.',
         costPerMillionEvents: 20,
-        realmOptimization: 0.71, // 30-day Realm dataset measured 71% volume reduction
+        realmOptimization: 0.71,
+        trafficCategory: 'network-security', // 30-day Realm dataset measured 71% volume reduction
     },
     {
         id: 'cisco-secure-firewall',
@@ -161,13 +183,15 @@ export const sources = [
         description: 'Firewall, intrusion, and malware detection telemetry.',
         costPerMillionEvents: 25,
         realmOptimization: 0.35,
+        trafficCategory: 'network-security',
     },
     {
         id: 'fortinet-fortigate',
         label: 'Fortinet FortiGate',
         description: 'Unified threat management events from FortiGate appliances.',
         costPerMillionEvents: 23,
-        realmOptimization: 0.75, // Vensure case study reports 75% reduction w/ Realm Focus
+        realmOptimization: 0.75,
+        trafficCategory: 'network-security', // Vensure case study reports 75% reduction w/ Realm Focus
     },
     {
         id: 'checkpoint-quantum',
@@ -175,6 +199,7 @@ export const sources = [
         description: 'Firewall, IPS, and application control logging.',
         costPerMillionEvents: 24,
         realmOptimization: 0.33,
+        trafficCategory: 'network-security',
     },
     {
         id: 'juniper-srx',
@@ -182,6 +207,7 @@ export const sources = [
         description: 'High-performance firewall session and threat logs.',
         costPerMillionEvents: 21,
         realmOptimization: 0.31,
+        trafficCategory: 'network-security',
     },
     {
         id: 'cisco-meraki-mx',
@@ -189,13 +215,15 @@ export const sources = [
         description: 'Cloud-managed security appliance event forwarding.',
         costPerMillionEvents: 19,
         realmOptimization: 0.3,
+        trafficCategory: 'network-security',
     },
     {
         id: 'cisco-umbrella',
         label: 'Cisco Umbrella Secure Internet Gateway',
         description: 'DNS-layer security and secure web gateway telemetry.',
         costPerMillionEvents: 20,
-        realmOptimization: 0.44, // Vensure case study reports 44% reduction
+        realmOptimization: 0.44,
+        trafficCategory: 'network-security', // Vensure case study reports 44% reduction
     },
     {
         id: 'cloudflare-gateway',
@@ -203,6 +231,7 @@ export const sources = [
         description: 'Secure web gateway and Zero Trust access logs.',
         costPerMillionEvents: 18,
         realmOptimization: 0.3,
+        trafficCategory: 'network-security',
     },
     {
         id: 'zscaler-internet-access',
@@ -210,6 +239,7 @@ export const sources = [
         description: 'Cloud proxy transactions and threat protection data.',
         costPerMillionEvents: 22,
         realmOptimization: 0.34,
+        trafficCategory: 'network-security',
     },
     {
         id: 'f5-big-ip-apm',
@@ -217,6 +247,7 @@ export const sources = [
         description: 'Access control, SSL VPN, and traffic management events.',
         costPerMillionEvents: 21,
         realmOptimization: 0.32,
+        trafficCategory: 'network-security',
     },
     {
         id: 'netskope-secure-service-edge',
@@ -224,6 +255,7 @@ export const sources = [
         description: 'CASB, SWG, and ZTNA telemetry from Netskope tenants.',
         costPerMillionEvents: 23,
         realmOptimization: 0.35,
+        trafficCategory: 'network-security',
     },
     {
         id: 'aruba-clearpass',
@@ -231,6 +263,7 @@ export const sources = [
         description: 'Network access control posture and authentication logs.',
         costPerMillionEvents: 17,
         realmOptimization: 0.28,
+        trafficCategory: 'network-security',
     },
     {
         id: 'cisco-ise',
@@ -238,6 +271,7 @@ export const sources = [
         description: '802.1X, TACACS+, and network access control events.',
         costPerMillionEvents: 18,
         realmOptimization: 0.3,
+        trafficCategory: 'network-security',
     },
     {
         id: 'proofpoint-email-protection',
@@ -245,6 +279,7 @@ export const sources = [
         description: 'Email security filtering and threat response telemetry.',
         costPerMillionEvents: 20,
         realmOptimization: 0.31,
+        trafficCategory: 'saas-business',
     },
     {
         id: 'barracuda-cloudgen-firewall',
@@ -252,6 +287,7 @@ export const sources = [
         description: 'Distributed firewall and SD-WAN event forwarding.',
         costPerMillionEvents: 17,
         realmOptimization: 0.26,
+        trafficCategory: 'network-security',
     },
     {
         id: 'sonicwall-capture-security',
@@ -259,6 +295,7 @@ export const sources = [
         description: 'Firewall and advanced threat protection analytics.',
         costPerMillionEvents: 16,
         realmOptimization: 0.25,
+        trafficCategory: 'network-security',
     },
     {
         id: 'sophos-xg-firewall',
@@ -266,6 +303,7 @@ export const sources = [
         description: 'Next-gen firewall and synchronized security logging.',
         costPerMillionEvents: 18,
         realmOptimization: 0.29,
+        trafficCategory: 'network-security',
     },
     {
         id: 'extrahop-revealx',
@@ -273,6 +311,7 @@ export const sources = [
         description: 'Network detection and response transaction telemetry.',
         costPerMillionEvents: 24,
         realmOptimization: 0.36,
+        trafficCategory: 'network-security',
     },
     {
         id: 'imperva-securesphere',
@@ -280,6 +319,7 @@ export const sources = [
         description: 'Web application firewall and database activity monitoring.',
         costPerMillionEvents: 22,
         realmOptimization: 0.33,
+        trafficCategory: 'network-security',
     },
     // Endpoint detection and response
     {
@@ -288,6 +328,7 @@ export const sources = [
         description: 'Endpoint telemetry and configuration state assessments.',
         costPerMillionEvents: 25,
         realmOptimization: 0.37,
+        trafficCategory: 'endpoint-edr',
     },
     {
         id: 'microsoft-defender-endpoint',
@@ -295,6 +336,7 @@ export const sources = [
         description: 'Behavioral detections and device telemetry from Defender.',
         costPerMillionEvents: 26,
         realmOptimization: 0.38,
+        trafficCategory: 'endpoint-edr',
     },
     {
         id: 'crowdstrike-falcon',
@@ -302,6 +344,7 @@ export const sources = [
         description: 'EDR detections, managed threat hunting, and audit events.',
         costPerMillionEvents: 28,
         realmOptimization: 0.4,
+        trafficCategory: 'endpoint-edr',
     },
     {
         id: 'sentinelone-singularity',
@@ -309,6 +352,7 @@ export const sources = [
         description: 'Autonomous EDR telemetry with storyline context.',
         costPerMillionEvents: 27,
         realmOptimization: 0.39,
+        trafficCategory: 'endpoint-edr',
     },
     {
         id: 'vmware-carbon-black',
@@ -316,6 +360,7 @@ export const sources = [
         description: 'Endpoint, workload, and container threat analytics.',
         costPerMillionEvents: 24,
         realmOptimization: 0.35,
+        trafficCategory: 'endpoint-edr',
     },
     {
         id: 'trend-micro-apex-one',
@@ -323,6 +368,7 @@ export const sources = [
         description: 'Endpoint protection and XDR detection telemetry.',
         costPerMillionEvents: 23,
         realmOptimization: 0.34,
+        trafficCategory: 'endpoint-edr',
     },
     {
         id: 'sophos-intercept-x',
@@ -330,6 +376,7 @@ export const sources = [
         description: 'Deep learning-driven endpoint detection events.',
         costPerMillionEvents: 22,
         realmOptimization: 0.33,
+        trafficCategory: 'endpoint-edr',
     },
     {
         id: 'kaspersky-endpoint-security',
@@ -337,6 +384,7 @@ export const sources = [
         description: 'Workstation and server security monitoring logs.',
         costPerMillionEvents: 19,
         realmOptimization: 0.3,
+        trafficCategory: 'endpoint-edr',
     },
     {
         id: 'bitdefender-gravityzone',
@@ -344,6 +392,7 @@ export const sources = [
         description: 'Endpoint protection, risk analytics, and sandboxing.',
         costPerMillionEvents: 20,
         realmOptimization: 0.32,
+        trafficCategory: 'endpoint-edr',
     },
     {
         id: 'mcafee-mvision',
@@ -351,6 +400,7 @@ export const sources = [
         description: 'Endpoint detection and response with unified agent.',
         costPerMillionEvents: 21,
         realmOptimization: 0.31,
+        trafficCategory: 'endpoint-edr',
     },
     {
         id: 'elastic-endpoint-security',
@@ -358,6 +408,7 @@ export const sources = [
         description: 'Elastic Security agent telemetry and protection alerts.',
         costPerMillionEvents: 22,
         realmOptimization: 0.34,
+        trafficCategory: 'endpoint-edr',
     },
 ];
 export const destinations = [
