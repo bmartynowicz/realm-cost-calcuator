@@ -19,7 +19,7 @@
           <p class="hero__eyebrow">Realm Cost Explorer</p>
           <h1 class="hero__title">Estimate your integration spend in minutes</h1>
           <p class="hero__subtitle">
-            Choose from 50 enterprise data sources and the top 20 SIEM destinations,
+            Choose from 19 security data sources and the top 20 SIEM destinations,
             enter the average daily traffic you expect to synchronize, and instantly
             compare traditional integration costs against Realm's optimized pricing.
           </p>
@@ -40,7 +40,16 @@
           </div>
           <label class="field">
             <span class="field__label">Data source</span>
-            <select id="sourceSelect" class="field__input"></select>
+            <select
+              id="sourceSelect"
+              class="field__input"
+              multiple
+              size="6"
+              aria-describedby="sourceHelp sourceSummary"
+            ></select>
+            <span id="sourceHelp" class="field__hint"
+              >Click sources to toggle selections; choose any combination you need.</span
+            >
             <span id="sourceSummary" class="field__hint"></span>
           </label>
         </section>

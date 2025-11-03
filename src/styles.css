@@ -152,6 +152,16 @@ body {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.field__input[multiple] {
+  height: auto;
+  min-height: 12rem;
+  padding: 0.5rem;
+}
+
+.field__input[multiple] option {
+  padding: 0.35rem 0.5rem;
+}
+
 .field__input:focus {
   border-color: var(--accent);
   outline: none;

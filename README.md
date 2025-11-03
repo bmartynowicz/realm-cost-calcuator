@@ -1,7 +1,7 @@
 # Realm Cost Calculator
 
 An interactive, client-side tool for estimating monthly integration costs and projected
-savings when routing data through Realm. The calculator lets you choose from 50
+savings when routing data through Realm. The calculator lets you choose from 19
 enterprise data sources spanning network, identity, infrastructure, and endpoint
 telemetry plus the top 20 SIEM destinations, enter expected daily traffic, and
 immediately compare traditional integration spend versus Realm's optimized
@@ -103,7 +103,7 @@ Static assets placed in `public/` are copied as-is to the output directory durin
 
 ## Customizing the model
 
-The pricing assumptions live in `src/data/catalog.ts`, which exports the 50-entry
+The pricing assumptions live in `src/data/catalog.ts`, which exports the 19-entry
 `sources` array and top-20 `destinations` array. Adjust the per-million event pricing or
 optimization percentages to fit your data contracts, and tweak the
 `REALM_PLATFORM_FEE_PER_MILLION` constant in `src/main.ts` (and the mirrored values in

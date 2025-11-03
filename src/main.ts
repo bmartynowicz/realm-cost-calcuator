@@ -9,7 +9,7 @@ import {
 } from './data/traffic-profiles.js';
 
 type CalculatorState = {
-  source: Endpoint;
+  sources: Endpoint[];
   destination: Endpoint;
   dailyTraffic: number;
 };
@@ -34,6 +34,7 @@ const CRIBL_PLATFORM_FEE_PER_MILLION = 12;
 const CRIBL_REVEAL_LABEL = 'Enter work email to unlock';
 const CRIBL_UNLOCKED_LABEL = 'Cribl estimate unlocked';
 const WORK_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
+const ENABLE_CRIBL_COMPARISON = false; // Temporary launch toggle for Cribl comparison
 const CONSUMER_EMAIL_DOMAINS = new Set([
   'gmail.com',
   'googlemail.com',
@@ -52,6 +53,10 @@ const CONSUMER_EMAIL_DOMAINS = new Set([
   'gmx.com',
   'yandex.com',
 ]);
+
+if (!ENABLE_CRIBL_COMPARISON) {
+  document.querySelector<HTMLElement>('[data-role="cribl-comparison"]')?.remove();
+}
 
 type JsPdfConstructor = typeof import('jspdf').jsPDF;
 type JsPdfGlobalNamespace = {
@@ -127,19 +132,63 @@ const formatDecimal = (
   }).format(value);
 };
 
-const calculate = ({ source, destination, dailyTraffic }: CalculatorState) => {
+type CombinedSourceMetrics = {
+  costPerMillionEvents: number;
+  realmOptimization: number;
+};
+
+const summarizeSources = (selectedSources: Endpoint[]): CombinedSourceMetrics => {
+  if (selectedSources.length === 0) {
+    throw new Error('At least one source must be provided for calculation.');
+  }
+
+  if (selectedSources.length === 1) {
+    const [singleSource] = selectedSources;
+    return {
+      costPerMillionEvents: singleSource.costPerMillionEvents,
+      realmOptimization: singleSource.realmOptimization,
+    };
+  }
+
+  const aggregates = selectedSources.reduce(
+    (accumulator, source) => {
+      accumulator.costPerMillionEvents += source.costPerMillionEvents;
+      accumulator.realmOptimization += source.realmOptimization;
+      return accumulator;
+    },
+    { costPerMillionEvents: 0, realmOptimization: 0 },
+  );
+
+  return {
+    costPerMillionEvents: aggregates.costPerMillionEvents / selectedSources.length,
+    realmOptimization: aggregates.realmOptimization / selectedSources.length,
+  };
+};
+
+const calculate = ({ sources: selectedSources, destination, dailyTraffic }: CalculatorState) => {
+  if (selectedSources.length === 0) {
+    throw new Error('At least one source must be selected.');
+  }
+
   const monthlyEvents = dailyTraffic * DAYS_PER_MONTH;
   const millions = monthlyEvents / 1_000_000;
 
-  const providerRatePerMillion = source.costPerMillionEvents + destination.costPerMillionEvents;
+  const combinedSource = summarizeSources(selectedSources);
+
+  const providerRatePerMillion =
+    combinedSource.costPerMillionEvents + destination.costPerMillionEvents;
   const legacyRatePerMillion = providerRatePerMillion + LEGACY_PIPELINE_OVERHEAD_PER_MILLION;
   const standardCost = millions * legacyRatePerMillion;
 
-  const overrideKey = `${source.id}::${destination.id}`;
-  const override = combinationOverrides[overrideKey];
+  const overrideKey =
+    selectedSources.length === 1 ? `${selectedSources[0].id}::${destination.id}` : null;
+  const override = overrideKey ? combinationOverrides[overrideKey] : undefined;
   const averageOptimization =
     override?.averageOptimization ??
-    Math.min(MAX_REALM_OPTIMIZATION, (source.realmOptimization + destination.realmOptimization) / 2);
+    Math.min(
+      MAX_REALM_OPTIMIZATION,
+      (combinedSource.realmOptimization + destination.realmOptimization) / 2,
+    );
 
   const optimizedRatePerMillion = providerRatePerMillion * (1 - averageOptimization);
   const realmCost = millions * (optimizedRatePerMillion + REALM_PLATFORM_FEE_PER_MILLION);
@@ -163,7 +212,7 @@ const calculate = ({ source, destination, dailyTraffic }: CalculatorState) => {
 type CalculationResult = ReturnType<typeof calculate>;
 
 type ExportSnapshot = CalculationResult & {
-  source: Endpoint;
+  sources: Endpoint[];
   destination: Endpoint;
   trafficUnit: TrafficUnit;
   organizationSize: OrganizationSizeKey;
@@ -194,12 +243,24 @@ const realmBreakdownEl = document.querySelector<HTMLElement>('#realmBreakdown');
 const savingsPercentEl = document.querySelector<HTMLElement>('#savingsPercent');
 const calibrationNoteEl = document.querySelector<HTMLElement>('#calibrationNote');
 const trafficRecommendationEl = document.querySelector<HTMLParagraphElement>('#trafficRecommendation');
-const criblCostEl = document.querySelector<HTMLElement>('#criblCost');
-const criblRevealButtonEl = document.querySelector<HTMLButtonElement>('[data-role="cribl-reveal-button"]');
-const criblRevealContainerEl = document.querySelector<HTMLElement>('#criblRevealForm');
-const criblRevealFormEl = document.querySelector<HTMLFormElement>('[data-role="cribl-reveal-form"]');
-const criblEmailInputEl = document.querySelector<HTMLInputElement>('#criblEmailInput');
-const criblErrorMessageEl = document.querySelector<HTMLParagraphElement>('[data-role="cribl-error-message"]');
+const criblCostEl = ENABLE_CRIBL_COMPARISON
+  ? document.querySelector<HTMLElement>('#criblCost')
+  : null;
+const criblRevealButtonEl = ENABLE_CRIBL_COMPARISON
+  ? document.querySelector<HTMLButtonElement>('[data-role="cribl-reveal-button"]')
+  : null;
+const criblRevealContainerEl = ENABLE_CRIBL_COMPARISON
+  ? document.querySelector<HTMLElement>('#criblRevealForm')
+  : null;
+const criblRevealFormEl = ENABLE_CRIBL_COMPARISON
+  ? document.querySelector<HTMLFormElement>('[data-role="cribl-reveal-form"]')
+  : null;
+const criblEmailInputEl = ENABLE_CRIBL_COMPARISON
+  ? document.querySelector<HTMLInputElement>('#criblEmailInput')
+  : null;
+const criblErrorMessageEl = ENABLE_CRIBL_COMPARISON
+  ? document.querySelector<HTMLParagraphElement>('[data-role="cribl-error-message"]')
+  : null;
 const exportPdfButtonEl = document.querySelector<HTMLButtonElement>('[data-role="export-pdf-button"]');
 
 const assertElement = <T>(value: T | null, label: string): T => {
@@ -249,6 +310,7 @@ type CriblUiElements = {
 };
 
 const criblUi: CriblUiElements | null =
+  ENABLE_CRIBL_COMPARISON &&
   criblCostEl &&
   criblRevealButtonEl &&
   criblRevealContainerEl &&
@@ -438,6 +500,55 @@ const renderSummary = (element: HTMLElement, endpoint: Endpoint) => {
   )} per million events`;
 };
 
+const enableClickToToggleMultiSelect = (select: HTMLSelectElement) => {
+  select.addEventListener('mousedown', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLOptionElement)) {
+      return;
+    }
+
+    event.preventDefault();
+    target.selected = !target.selected;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+};
+
+const getSelectedSourceIds = (): string[] =>
+  Array.from(requiredSourceSelect.selectedOptions).map((option) => option.value);
+
+const getSelectedSources = (): Endpoint[] => {
+  const selectedIds = getSelectedSourceIds();
+  if (selectedIds.length === 0 && requiredSourceSelect.options.length > 0) {
+    const [firstOption] = Array.from(requiredSourceSelect.options);
+    if (firstOption) {
+      firstOption.selected = true;
+      return [getEndpoint(sources, firstOption.value)];
+    }
+  }
+
+  return selectedIds.map((id) => getEndpoint(sources, id));
+};
+
+const renderSourcesSummary = (element: HTMLElement, selectedSources: Endpoint[]) => {
+  if (selectedSources.length === 0) {
+    element.textContent = 'Select at least one source.';
+    element.removeAttribute('title');
+    return;
+  }
+
+  if (selectedSources.length === 1) {
+    renderSummary(element, selectedSources[0]);
+    element.title = selectedSources[0].label;
+    return;
+  }
+
+  const combined = summarizeSources(selectedSources);
+  element.textContent = `${selectedSources.length} sources selected • Avg provider rate ${formatCurrency(
+    combined.costPerMillionEvents,
+  )} per million events`;
+  element.title = selectedSources.map((endpoint) => endpoint.label).join(', ');
+};
+
 const resetOutputs = () => {
   lastSnapshot = null;
   setExportButtonState(false);
@@ -464,8 +575,13 @@ const applyRecommendation = ({
   overrideEventSize,
 }: { overrideTraffic?: boolean; overrideEventSize?: boolean } = {}) => {
   const size = requiredOrganizationSizeSelect.value as OrganizationSizeKey;
-  const source = getEndpoint(sources, requiredSourceSelect.value);
-  const recommendation = getTrafficRecommendation(source, size);
+  const selectedSources = getSelectedSources();
+  const primarySource = selectedSources[0] ?? sources[0];
+  if (!primarySource) {
+    return;
+  }
+
+  const recommendation = getTrafficRecommendation(primarySource, size);
   currentRecommendation = recommendation;
 
   const shouldOverrideTraffic =
@@ -493,19 +609,31 @@ const applyRecommendation = ({
     userEventSizeEdited = false;
   }
 
-  requiredTrafficRecommendation.textContent = describeTrafficRecommendation(recommendation);
+  const recommendationSummary = describeTrafficRecommendation(recommendation);
+  requiredTrafficRecommendation.textContent =
+    selectedSources.length > 1
+      ? `${recommendationSummary} (baseline uses ${primarySource.label} — adjust for additional sources as needed.)`
+      : recommendationSummary;
 };
 
 const update = () => {
-  const source = getEndpoint(sources, requiredSourceSelect.value);
+  const selectedSources = getSelectedSources();
+  const primarySource = selectedSources[0] ?? sources[0];
+  if (!primarySource) {
+    return;
+  }
   const destination = getEndpoint(destinations, requiredDestinationSelect.value);
-  renderSummary(requiredSourceSummary, source);
+  renderSourcesSummary(requiredSourceSummary, selectedSources);
   renderSummary(requiredDestinationSummary, destination);
   const organizationSizeKey = requiredOrganizationSizeSelect.value as OrganizationSizeKey;
   const recommendation =
-    currentRecommendation ?? getTrafficRecommendation(source, organizationSizeKey);
+    currentRecommendation ?? getTrafficRecommendation(primarySource, organizationSizeKey);
   currentRecommendation = recommendation;
-  requiredTrafficRecommendation.textContent = describeTrafficRecommendation(recommendation);
+  const recommendationSummary = describeTrafficRecommendation(recommendation);
+  requiredTrafficRecommendation.textContent =
+    selectedSources.length > 1
+      ? `${recommendationSummary} (baseline uses ${primarySource.label} — adjust for additional sources as needed.)`
+      : recommendationSummary;
 
   const unit = requiredTrafficUnit.value as TrafficUnit;
   requiredEventSizeField.classList.toggle('field--hidden', unit === 'events');
@@ -559,7 +687,7 @@ const update = () => {
     averageOptimization,
     calibrationNote,
   } = calculate({
-    source,
+    sources: selectedSources,
     destination,
     dailyTraffic: dailyEvents,
   });
@@ -583,7 +711,7 @@ const update = () => {
   const criblCost = estimateCriblCost(monthlyEvents, providerRatePerMillion);
 
   lastSnapshot = {
-    source,
+    sources: selectedSources,
     destination,
     trafficUnit: unit,
     organizationSize: organizationSizeKey,
@@ -633,17 +761,28 @@ const describeDailyVolume = (snapshot: ExportSnapshot): string => {
 };
 
 const buildScenarioLines = (snapshot: ExportSnapshot): string[] => {
+  const sourceLabels = snapshot.sources.map((endpoint) => endpoint.label);
   const lines = [
-    `Source: ${snapshot.source.label}`,
+    `Sources (${snapshot.sources.length}): ${sourceLabels.join(', ')}`,
     `Destination: ${snapshot.destination.label}`,
   ];
 
-  if (snapshot.source.description) {
-    lines.push(`Source notes: ${snapshot.source.description}`);
+  for (const source of snapshot.sources) {
+    if (source.description) {
+      lines.push(`Source notes (${source.label}): ${source.description}`);
+    }
   }
 
   if (snapshot.destination.description) {
     lines.push(`Destination notes: ${snapshot.destination.description}`);
+  }
+
+  if (snapshot.sources.length > 1) {
+    const combined = summarizeSources(snapshot.sources);
+    lines.push(
+      `Average provider rate across sources: ${formatCurrency(combined.costPerMillionEvents)} per million events.`,
+      'Scenario assumes evenly distributed volume across selected sources.',
+    );
   }
 
   lines.push(
@@ -825,6 +964,7 @@ const initialize = () => {
   populateSelect(requiredSourceSelect, sources);
   populateSelect(requiredDestinationSelect, destinations);
   populateOrganizationSizeSelect(requiredOrganizationSizeSelect);
+  enableClickToToggleMultiSelect(requiredSourceSelect);
   requiredSourceSelect.value = sources[0]?.id ?? '';
   requiredDestinationSelect.value = destinations[0]?.id ?? '';
   requiredTrafficUnit.value = 'events';

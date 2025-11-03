@@ -6,7 +6,7 @@
     <title>Realm Cost Calculator</title>
     <meta
       name="description"
-      content="Realm Cost Calculator helps security and data teams estimate ingestion and egress costs across 50 enterprise data sources and 20 SIEM destinations."
+      content="Realm Cost Calculator helps security and data teams estimate ingestion and egress costs across 19 prioritized security data sources and 20 SIEM destinations."
     />
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#0f172a" />
@@ -85,7 +85,7 @@
                 "name": "Which data sources and SIEM platforms are supported?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Realm maintains pricing data for 50+ enterprise sources - such as Okta, CrowdStrike, and Palo Alto Networks - and the 20 most common SIEM and observability destinations, including Splunk, Microsoft Sentinel, and Sumo Logic."
+                  "text": "Realm maintains pricing data for 19 enterprise sources - such as Okta, CrowdStrike, and Palo Alto Networks - and the 20 most common SIEM and observability destinations, including Splunk, Microsoft Sentinel, and Sumo Logic."
                 }
               },
               {
@@ -110,7 +110,7 @@
           <p class="hero__eyebrow">Realm Cost Explorer</p>
           <h1 class="hero__title">Estimate your integration spend in minutes</h1>
           <p class="hero__subtitle">
-            Choose from 50 enterprise data sources and the top 20 SIEM destinations,
+            Choose from 19 security data sources and the top 20 SIEM destinations,
             enter the average daily traffic you expect to synchronize, and instantly
             compare traditional integration costs against Realm's optimized pricing.
           </p>
@@ -131,7 +131,16 @@
           </div>
           <label class="field">
             <span class="field__label">Data source</span>
-            <select id="sourceSelect" class="field__input"></select>
+            <select
+              id="sourceSelect"
+              class="field__input"
+              multiple
+              size="6"
+              aria-describedby="sourceHelp sourceSummary"
+            ></select>
+            <span id="sourceHelp" class="field__hint"
+              >Click sources to toggle selections; choose any combination you need.</span
+            >
             <span id="sourceSummary" class="field__hint"></span>
           </label>
         </section>
@@ -265,7 +274,10 @@
                 Download executive summary PDF
               </button>
             </div>
-            <div class="metrics__item metrics__item--action metrics__item--comparison">
+            <div
+              class="metrics__item metrics__item--action metrics__item--comparison"
+              data-role="cribl-comparison"
+            >
               <h3 class="metrics__actions-title">Benchmark against Cribl</h3>
               <p class="metrics__actions-copy">
                 Unlock an estimated Cribl cost to keep competitive analyses in the same view.
@@ -380,7 +392,7 @@
             <article class="faq__item">
               <h3 class="faq__question">Which data sources and SIEM destinations can I model?</h3>
               <p class="faq__answer">
-                You can choose from 50+ enterprise-grade sources and the top 20 SIEM or observability platforms. This includes
+                You can choose from 19 enterprise-grade sources and the top 20 SIEM or observability platforms. This includes
                 providers such as AWS CloudTrail, CrowdStrike, Okta, Palo Alto Networks, Splunk, Microsoft Sentinel, and Sumo
                 Logic. New integrations are added frequently.
               </p>
