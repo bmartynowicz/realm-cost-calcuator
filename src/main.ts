@@ -98,52 +98,41 @@ const loadJsPdf = async (): Promise<JsPdfConstructor | null> => {
   return jsPdfLoader;
 };
 
-let realmLogoDataUrl: string | null | undefined;
+type RealmLogoAsset = {
+  dataUrl: string;
+  width: number;
+  height: number;
+};
 
-const loadRealmLogo = async (): Promise<string | null> => {
-  if (realmLogoDataUrl !== undefined) {
-    return realmLogoDataUrl;
+const REALM_LOGO_PATH = '/Realm-Security-Logo.png';
+
+let realmLogoAsset: RealmLogoAsset | null | undefined;
+
+const loadRealmLogo = async (): Promise<RealmLogoAsset | null> => {
+  if (realmLogoAsset !== undefined) {
+    return realmLogoAsset;
   }
 
   if (typeof window === 'undefined' || typeof document === 'undefined') {
-    realmLogoDataUrl = null;
-    return realmLogoDataUrl;
+    realmLogoAsset = null;
+    return realmLogoAsset;
   }
 
   try {
-    const response = await fetch('/realm-logo.svg', { cache: 'force-cache' });
+    const response = await fetch(REALM_LOGO_PATH, { cache: 'force-cache' });
     if (!response.ok) {
       throw new Error(`Realm logo request failed with status ${response.status}`);
     }
 
-    const svgText = await response.text();
-    const viewBoxMatch = svgText.match(/viewBox="([^"]+)"/i);
-    let fallbackWidth = 220;
-    let fallbackHeight = 72;
-    if (viewBoxMatch) {
-      const parts = viewBoxMatch[1]?.split(/\s+/).map((value) => Number.parseFloat(value));
-      if (
-        Array.isArray(parts) &&
-        parts.length === 4 &&
-        Number.isFinite(parts[2]) &&
-        Number.isFinite(parts[3]) &&
-        parts[2] > 0 &&
-        parts[3] > 0
-      ) {
-        fallbackWidth = parts[2];
-        fallbackHeight = parts[3];
-      }
-    }
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
 
-    const svgBlob = new Blob([svgText], { type: 'image/svg+xml' });
-    const objectUrl = URL.createObjectURL(svgBlob);
-
-    const pngDataUrl = await new Promise<string>((resolve, reject) => {
+    const asset = await new Promise<RealmLogoAsset>((resolve, reject) => {
       const image = new Image();
       image.onload = () => {
         try {
-          const width = image.naturalWidth || fallbackWidth;
-          const height = image.naturalHeight || fallbackHeight;
+          const width = image.naturalWidth || 256;
+          const height = image.naturalHeight || 90;
           const canvas = document.createElement('canvas');
           canvas.width = width;
           canvas.height = height;
@@ -153,7 +142,7 @@ const loadRealmLogo = async (): Promise<string | null> => {
             return;
           }
           context.drawImage(image, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/png'));
+          resolve({ dataUrl: canvas.toDataURL('image/png'), width, height });
         } catch (conversionError) {
           reject(conversionError);
         } finally {
@@ -167,13 +156,13 @@ const loadRealmLogo = async (): Promise<string | null> => {
       image.src = objectUrl;
     });
 
-    realmLogoDataUrl = pngDataUrl;
+    realmLogoAsset = asset;
   } catch (error) {
     console.error('Realm logo failed to load for PDF export:', error);
-    realmLogoDataUrl = null;
+    realmLogoAsset = null;
   }
 
-  return realmLogoDataUrl;
+  return realmLogoAsset;
 };
 
 const combinationOverrides: Record<string, CombinationOverride> = {
@@ -371,7 +360,7 @@ const requiredSourceSummary = assertElement(sourceSummary, 'Source summary');
 const requiredDestinationSummary = assertElement(destinationSummary, 'Destination summary');
 const requiredTrafficError = assertElement(trafficError, 'Traffic error');
 const requiredMonthlyEvents = assertElement(monthlyEventsEl, 'Monthly events');
-const requiredStandardCost = assertElement(standardCostEl, 'SIEM cost');
+const requiredStandardCost = assertElement(standardCostEl, 'Current cost');
 const requiredRealmCost = assertElement(realmCostEl, 'Realm cost');
 const requiredSavings = assertElement(savingsEl, 'Savings');
 const requiredTrafficRecommendation = assertElement(
@@ -1063,7 +1052,7 @@ const buildFinancialLines = (snapshot: ExportSnapshot): string[] => {
         )}% vs standard)`;
 
   const lines = [
-    `Current cost (SIEM): ${formatCurrency(Math.max(0, snapshot.standardCost))}`,
+    `Current cost: ${formatCurrency(Math.max(0, snapshot.standardCost))}`,
     `With Realm: ${formatCurrency(Math.max(0, snapshot.realmCost))}`,
     savingsLine,
     `Legacy pipeline rate per million: ${formatCurrency(snapshot.legacyRatePerMillion)} (${formatCurrency(
@@ -1109,13 +1098,15 @@ const createExecutiveSummaryPdf = async (
     }
   };
 
-  const logoDataUrl = await loadRealmLogo();
-  if (logoDataUrl) {
-    const logoWidth = 150;
-    const logoHeight = (30.36 / 93.04) * logoWidth;
-    ensureSpace(logoHeight + 16);
-    doc.addImage(logoDataUrl, 'PNG', margin, cursorY, logoWidth, logoHeight);
-    cursorY += logoHeight + 20;
+  const logoAsset = await loadRealmLogo();
+  if (logoAsset) {
+    const maxLogoWidth = Math.min(180, textWidth);
+    const renderWidth = Math.min(maxLogoWidth, Math.max(1, logoAsset.width));
+    const aspectRatio = logoAsset.width > 0 ? logoAsset.height / logoAsset.width : 0.35;
+    const renderHeight = aspectRatio * renderWidth;
+    ensureSpace(renderHeight + 16);
+    doc.addImage(logoAsset.dataUrl, 'PNG', margin, cursorY, renderWidth, renderHeight);
+    cursorY += renderHeight + 20;
   }
 
   doc.setFont('Helvetica', 'bold');
@@ -1190,7 +1181,7 @@ const createExecutiveSummaryPdf = async (
     doc.setFont('Helvetica', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(148, 163, 184);
-    doc.text('Realm | https://realm.build', margin, footerBaseline);
+    doc.text('Realm | https://realm.security', margin, footerBaseline);
 
     const footerRight = `Scenario export | Page ${pageIndex} of ${totalPages}`;
     const footerRightWidth = doc.getTextWidth(footerRight);

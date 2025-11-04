@@ -17,13 +17,13 @@
     />
     <meta
       property="og:description"
-      content="Instantly model traditional integration costs versus Realm's optimized pricing and quantify projected savings before you ship telemetry."
+      content="Instantly model log volume costs versus Realm's optimized pricing and quantify projected savings before you ship telemetry."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://realm.build/realm-cost-calculator" />
+    <meta property="og:url" content="https://realm.security/realm-cost-calculator" />
     <meta
       property="og:image"
-      content="https://realm.build/assets/realm-cost-calculator-preview.png"
+      content="https://realm.security/assets/realm-cost-calculator-preview.png"
     />
     <meta name="twitter:card" content="summary_large_image" />
     <meta
@@ -36,9 +36,9 @@
     />
     <meta
       name="twitter:image"
-      content="https://realm.build/assets/realm-cost-calculator-preview.png"
+      content="https://realm.security/assets/realm-cost-calculator-preview.png"
     />
-    <link rel="canonical" href="https://realm.build/realm-cost-calculator" />
+    <link rel="canonical" href="https://realm.security/realm-cost-calculator" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -57,11 +57,11 @@
             "applicationSubCategory": "SecurityAnalytics",
             "operatingSystem": "Web",
             "description": "Interactive calculator for projecting Realm integration costs against traditional data pipelines across popular SIEM and observability platforms.",
-            "url": "https://realm.build/realm-cost-calculator",
+            "url": "https://realm.security/realm-cost-calculator",
             "provider": {
               "@type": "Organization",
               "name": "Realm",
-              "url": "https://realm.build"
+              "url": "https://realm.security"
             },
             "offers": {
               "@type": "Offer",
@@ -108,23 +108,22 @@
       <header class="hero">
         <div class="hero__content">
           <img
-            src="/realm-logo.svg"
+            src="/Realm-Security-Logo.png"
             alt="Realm"
             class="hero__logo"
-            width="175"
-            height="57"
+            width="260"
+            height="91"
             decoding="async"
           />
-          <p class="hero__eyebrow">Realm Cost Explorer</p>
-          <h1 class="hero__title">Estimate your integration spend in minutes</h1>
+          <h1 class="hero__title">Understand your current security log volume spend</h1>
           <p class="hero__subtitle">
             Choose from 19 security data sources and the top 20 SIEM destinations,
             enter the average daily traffic you expect to synchronize, and instantly
-            compare traditional integration costs against Realm's optimized pricing.
+            compare log volume costs against Realm's optimized pricing.
           </p>
         </div>
         <div class="hero__meta">
-          <p class="hero__badge">Real-time calculator</p>
+          <p class="hero__badge">Realm Cost Explorer</p>
         </div>
       </header>
 
@@ -237,7 +236,7 @@
           <div class="panel__header">
             <h2 class="panel__title" id="results-heading">Cost projection</h2>
             <p class="panel__subtitle">
-              Instantly compare expected integration costs with and without Realm's
+              Instantly compare expected log volume costs with and without Realm's
               optimization.
             </p>
           </div>
@@ -267,7 +266,7 @@
               <dd class="metrics__value" id="monthlyEvents">--</dd>
             </div>
             <div class="metrics__item">
-              <dt class="metrics__label">- SIEM Cost</dt>
+              <dt class="metrics__label">- Current Cost</dt>
               <dd class="metrics__value metrics__value--with-tooltip">
                 <span id="standardCost">--</span>
                 <button
@@ -275,13 +274,13 @@
                   class="metrics__tooltip-trigger"
                   data-role="tooltip-trigger"
                   data-tooltip-target="standardBreakdown"
-                  data-tooltip-label="SIEM cost breakdown"
+                  data-tooltip-label="Current cost breakdown"
                   aria-expanded="false"
                   aria-describedby="standardBreakdown"
                   hidden
                 >
                   <span aria-hidden="true" class="metrics__tooltip-icon">i</span>
-                  <span class="sr-only">Show SIEM cost breakdown</span>
+                  <span class="sr-only">Show current cost breakdown</span>
                 </button>
                 <span class="sr-only" id="standardBreakdown" data-role="tooltip-text"></span>
               </dd>

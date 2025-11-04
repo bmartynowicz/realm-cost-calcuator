@@ -17,19 +17,19 @@
       <header class="hero">
         <div class="hero__content">
           <img
-            src="./public/realm-logo.svg"
+            src="./public/Realm-Security-Logo.png"
             alt="Realm"
             class="hero__logo"
-            width="175"
-            height="57"
+            width="260"
+            height="91"
             decoding="async"
           />
           <p class="hero__eyebrow">Realm Cost Explorer</p>
-          <h1 class="hero__title">Estimate your integration spend in minutes</h1>
+          <h1 class="hero__title">Understand your current security log volume spend</h1>
           <p class="hero__subtitle">
             Choose from 19 security data sources and the top 20 SIEM destinations,
             enter the average daily traffic you expect to synchronize, and instantly
-            compare traditional integration costs against Realm's optimized pricing.
+            compare log volume costs against Realm's optimized pricing.
           </p>
         </div>
         <div class="hero__meta">
@@ -146,7 +146,7 @@
           <div class="panel__header">
             <h2 class="panel__title" id="results-heading">Cost projection</h2>
             <p class="panel__subtitle">
-              Instantly compare expected integration costs with and without Realm's
+              Instantly compare expected log volume costs with and without Realm's
               optimization.
             </p>
           </div>
@@ -176,7 +176,7 @@
               <dd class="metrics__value" id="monthlyEvents">--</dd>
             </div>
             <div class="metrics__item">
-              <dt class="metrics__label">- SIEM Cost</dt>
+              <dt class="metrics__label">- Current Cost</dt>
               <dd class="metrics__value metrics__value--with-tooltip">
                 <span id="standardCost">--</span>
                 <button
@@ -184,13 +184,13 @@
                   class="metrics__tooltip-trigger"
                   data-role="tooltip-trigger"
                   data-tooltip-target="standardBreakdown"
-                  data-tooltip-label="SIEM cost breakdown"
+                  data-tooltip-label="Current cost breakdown"
                   aria-expanded="false"
                   aria-describedby="standardBreakdown"
                   hidden
                 >
                   <span aria-hidden="true" class="metrics__tooltip-icon">i</span>
-                  <span class="sr-only">Show SIEM cost breakdown</span>
+                  <span class="sr-only">Show current cost breakdown</span>
                 </button>
                 <span class="sr-only" id="standardBreakdown" data-role="tooltip-text"></span>
               </dd>
