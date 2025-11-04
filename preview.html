@@ -16,6 +16,14 @@
     <div class="app-shell">
       <header class="hero">
         <div class="hero__content">
+          <img
+            src="./public/realm-logo.svg"
+            alt="Realm"
+            class="hero__logo"
+            width="175"
+            height="57"
+            decoding="async"
+          />
           <p class="hero__eyebrow">Realm Cost Explorer</p>
           <h1 class="hero__title">Estimate your integration spend in minutes</h1>
           <p class="hero__subtitle">
@@ -168,7 +176,7 @@
               <dd class="metrics__value" id="monthlyEvents">--</dd>
             </div>
             <div class="metrics__item">
-              <dt class="metrics__label">- Current Cost</dt>
+              <dt class="metrics__label">- SIEM Cost</dt>
               <dd class="metrics__value metrics__value--with-tooltip">
                 <span id="standardCost">--</span>
                 <button
@@ -176,19 +184,19 @@
                   class="metrics__tooltip-trigger"
                   data-role="tooltip-trigger"
                   data-tooltip-target="standardBreakdown"
-                  data-tooltip-label="Standard cost breakdown"
+                  data-tooltip-label="SIEM cost breakdown"
                   aria-expanded="false"
                   aria-describedby="standardBreakdown"
                   hidden
                 >
                   <span aria-hidden="true" class="metrics__tooltip-icon">i</span>
-                  <span class="sr-only">Show standard cost breakdown</span>
+                  <span class="sr-only">Show SIEM cost breakdown</span>
                 </button>
                 <span class="sr-only" id="standardBreakdown" data-role="tooltip-text"></span>
               </dd>
             </div>
             <div class="metrics__item">
-              <dt class="metrics__label">Realm optimized cost</dt>
+              <dt class="metrics__label">With Realm</dt>
               <dd class="metrics__value metrics__value--highlight metrics__value--with-tooltip">
                 <span id="realmCost">--</span>
                 <button

@@ -98,6 +98,84 @@ const loadJsPdf = async (): Promise<JsPdfConstructor | null> => {
   return jsPdfLoader;
 };
 
+let realmLogoDataUrl: string | null | undefined;
+
+const loadRealmLogo = async (): Promise<string | null> => {
+  if (realmLogoDataUrl !== undefined) {
+    return realmLogoDataUrl;
+  }
+
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    realmLogoDataUrl = null;
+    return realmLogoDataUrl;
+  }
+
+  try {
+    const response = await fetch('/realm-logo.svg', { cache: 'force-cache' });
+    if (!response.ok) {
+      throw new Error(`Realm logo request failed with status ${response.status}`);
+    }
+
+    const svgText = await response.text();
+    const viewBoxMatch = svgText.match(/viewBox="([^"]+)"/i);
+    let fallbackWidth = 220;
+    let fallbackHeight = 72;
+    if (viewBoxMatch) {
+      const parts = viewBoxMatch[1]?.split(/\s+/).map((value) => Number.parseFloat(value));
+      if (
+        Array.isArray(parts) &&
+        parts.length === 4 &&
+        Number.isFinite(parts[2]) &&
+        Number.isFinite(parts[3]) &&
+        parts[2] > 0 &&
+        parts[3] > 0
+      ) {
+        fallbackWidth = parts[2];
+        fallbackHeight = parts[3];
+      }
+    }
+
+    const svgBlob = new Blob([svgText], { type: 'image/svg+xml' });
+    const objectUrl = URL.createObjectURL(svgBlob);
+
+    const pngDataUrl = await new Promise<string>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => {
+        try {
+          const width = image.naturalWidth || fallbackWidth;
+          const height = image.naturalHeight || fallbackHeight;
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const context = canvas.getContext('2d');
+          if (!context) {
+            reject(new Error('Realm logo canvas context unavailable.'));
+            return;
+          }
+          context.drawImage(image, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/png'));
+        } catch (conversionError) {
+          reject(conversionError);
+        } finally {
+          URL.revokeObjectURL(objectUrl);
+        }
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Realm logo image failed to load.'));
+      };
+      image.src = objectUrl;
+    });
+
+    realmLogoDataUrl = pngDataUrl;
+  } catch (error) {
+    console.error('Realm logo failed to load for PDF export:', error);
+    realmLogoDataUrl = null;
+  }
+
+  return realmLogoDataUrl;
+};
+
 const combinationOverrides: Record<string, CombinationOverride> = {
   'fortinet-fortigate::sumo-logic-siem': {
     averageOptimization: 0.2099,
@@ -224,6 +302,12 @@ type ExportSnapshot = CalculationResult & {
   criblEstimateUnlocked: boolean;
 };
 
+type ExportContactDetails = {
+  companyName: string;
+  contactName: string;
+  contactEmail: string;
+};
+
 const sourceSelect = document.querySelector<HTMLSelectElement>('#sourceSelect');
 const sourceSearchInput = document.querySelector<HTMLInputElement>('[data-role="source-search"]');
 const destinationSelect = document.querySelector<HTMLSelectElement>('#destinationSelect');
@@ -259,6 +343,10 @@ const criblEmailInputEl = ENABLE_CRIBL_COMPARISON
 const criblErrorMessageEl = ENABLE_CRIBL_COMPARISON
   ? document.querySelector<HTMLParagraphElement>('[data-role="cribl-error-message"]')
   : null;
+const exportPdfFormEl = document.querySelector<HTMLFormElement>('[data-role="export-pdf-form"]');
+const exportCompanyInputEl = document.querySelector<HTMLInputElement>('#exportCompanyInput');
+const exportContactInputEl = document.querySelector<HTMLInputElement>('#exportContactInput');
+const exportEmailInputEl = document.querySelector<HTMLInputElement>('#exportEmailInput');
 const exportPdfButtonEl = document.querySelector<HTMLButtonElement>('[data-role="export-pdf-button"]');
 
 const assertElement = <T>(value: T | null, label: string): T => {
@@ -283,15 +371,24 @@ const requiredSourceSummary = assertElement(sourceSummary, 'Source summary');
 const requiredDestinationSummary = assertElement(destinationSummary, 'Destination summary');
 const requiredTrafficError = assertElement(trafficError, 'Traffic error');
 const requiredMonthlyEvents = assertElement(monthlyEventsEl, 'Monthly events');
-const requiredStandardCost = assertElement(standardCostEl, 'Standard cost');
+const requiredStandardCost = assertElement(standardCostEl, 'SIEM cost');
 const requiredRealmCost = assertElement(realmCostEl, 'Realm cost');
 const requiredSavings = assertElement(savingsEl, 'Savings');
 const requiredTrafficRecommendation = assertElement(
   trafficRecommendationEl,
   'Traffic recommendation',
 );
+const requiredExportPdfForm = assertElement(exportPdfFormEl, 'Export PDF form');
+const requiredExportCompanyInput = assertElement(exportCompanyInputEl, 'Export company input');
+const requiredExportContactInput = assertElement(exportContactInputEl, 'Export contact input');
+const requiredExportEmailInput = assertElement(exportEmailInputEl, 'Export email input');
 const requiredExportPdfButton = assertElement(exportPdfButtonEl, 'Export PDF button');
 const optionalCalibrationNote = calibrationNoteEl ?? null;
+const exportFormInputs = [
+  requiredExportCompanyInput,
+  requiredExportContactInput,
+  requiredExportEmailInput,
+];
 let sourceSearchRecords: { option: HTMLOptionElement; tokens: string }[] = [];
 let userTrafficEdited = false;
 let userEventSizeEdited = false;
@@ -911,6 +1008,12 @@ const describeDailyVolume = (snapshot: ExportSnapshot): string => {
   return `${volume} ${unitLabel} per day (assumes ${averageSize} KB per event)`;
 };
 
+const buildStakeholderLines = (details: ExportContactDetails): string[] => [
+  `Company: ${details.companyName}`,
+  `Primary contact: ${details.contactName}`,
+  `Work email: ${details.contactEmail}`,
+];
+
 const buildScenarioLines = (snapshot: ExportSnapshot): string[] => {
   const sourceLabels = snapshot.sources.map((endpoint) => endpoint.label);
   const lines = [
@@ -981,7 +1084,10 @@ const buildFinancialLines = (snapshot: ExportSnapshot): string[] => {
   return lines;
 };
 
-const createExecutiveSummaryPdf = async (snapshot: ExportSnapshot) => {
+const createExecutiveSummaryPdf = async (
+  snapshot: ExportSnapshot,
+  contact: ExportContactDetails,
+) => {
   const JsPdfConstructor = await loadJsPdf();
   if (!JsPdfConstructor) {
     throw new Error('jsPDF library is not available.');
@@ -1002,6 +1108,15 @@ const createExecutiveSummaryPdf = async (snapshot: ExportSnapshot) => {
       cursorY = margin;
     }
   };
+
+  const logoDataUrl = await loadRealmLogo();
+  if (logoDataUrl) {
+    const logoWidth = 150;
+    const logoHeight = (30.36 / 93.04) * logoWidth;
+    ensureSpace(logoHeight + 16);
+    doc.addImage(logoDataUrl, 'PNG', margin, cursorY, logoWidth, logoHeight);
+    cursorY += logoHeight + 20;
+  }
 
   doc.setFont('Helvetica', 'bold');
   doc.setFontSize(20);
@@ -1049,6 +1164,7 @@ const createExecutiveSummaryPdf = async (snapshot: ExportSnapshot) => {
     cursorY += sectionSpacing;
   };
 
+  addSection('Stakeholder Details', buildStakeholderLines(contact));
   addSection('Scenario Inputs', buildScenarioLines(snapshot));
   addSection('Financial Impact', buildFinancialLines(snapshot));
 
@@ -1085,7 +1201,7 @@ const createExecutiveSummaryPdf = async (snapshot: ExportSnapshot) => {
   doc.save('realm-executive-summary.pdf');
 };
 
-const handleExportPdf = async () => {
+const handleExportPdf = async (contactDetails: ExportContactDetails) => {
   if (!lastSnapshot || requiredExportPdfButton.dataset.loading === 'true') {
     return;
   }
@@ -1094,20 +1210,60 @@ const handleExportPdf = async () => {
   requiredExportPdfButton.disabled = true;
   requiredExportPdfButton.setAttribute('aria-disabled', 'true');
   requiredExportPdfButton.textContent = 'Preparing PDF...';
+  for (const input of exportFormInputs) {
+    input.disabled = true;
+  }
 
   try {
-    await createExecutiveSummaryPdf(lastSnapshot);
+    await createExecutiveSummaryPdf(lastSnapshot, contactDetails);
     requiredExportPdfButton.blur();
   } catch (error) {
     console.error('PDF export failed:', error);
     showExportError(EXPORT_BUTTON_ERROR_LABEL);
   } finally {
+    for (const input of exportFormInputs) {
+      input.disabled = false;
+    }
     requiredExportPdfButton.disabled = false;
     requiredExportPdfButton.removeAttribute('aria-disabled');
     delete requiredExportPdfButton.dataset.loading;
     if (!requiredExportPdfButton.classList.contains('metrics__export-button--error')) {
       resetExportButtonMessage();
     }
+  }
+};
+
+const setupFaqAccordion = () => {
+  const faqItems = Array.from(document.querySelectorAll<HTMLElement>('.faq__item'));
+
+  for (const faqItem of faqItems) {
+    const toggle = faqItem.querySelector<HTMLButtonElement>('.faq__toggle');
+    const answer = faqItem.querySelector<HTMLElement>('.faq__answer');
+
+    if (!toggle || !answer) {
+      continue;
+    }
+
+    const setExpandedState = (expanded: boolean) => {
+      toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      faqItem.classList.toggle('is-open', expanded);
+      answer.hidden = !expanded;
+    };
+
+    setExpandedState(!answer.hidden);
+
+    toggle.addEventListener('click', () => {
+      const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+      setExpandedState(!isExpanded);
+    });
+
+    toggle.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+        event.preventDefault();
+        setExpandedState(false);
+        toggle.focus();
+      }
+    });
   }
 };
 
@@ -1180,8 +1336,29 @@ if (optionalEventSizeInput) {
     update();
   });
 }
-requiredExportPdfButton.addEventListener('click', () => {
-  void handleExportPdf();
+requiredExportPdfForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  if (
+    requiredExportPdfButton.disabled ||
+    requiredExportPdfButton.dataset.loading === 'true'
+  ) {
+    return;
+  }
+
+  if (!requiredExportPdfForm.reportValidity()) {
+    return;
+  }
+
+  const contactDetails: ExportContactDetails = {
+    companyName: requiredExportCompanyInput.value.trim(),
+    contactName: requiredExportContactInput.value.trim(),
+    contactEmail: requiredExportEmailInput.value.trim(),
+  };
+  requiredExportCompanyInput.value = contactDetails.companyName;
+  requiredExportContactInput.value = contactDetails.contactName;
+  requiredExportEmailInput.value = contactDetails.contactEmail;
+
+  void handleExportPdf(contactDetails);
 });
 
 if (criblUi) {
@@ -1215,4 +1392,5 @@ if (criblUi) {
   });
 }
 
+setupFaqAccordion();
 initialize();

@@ -107,6 +107,14 @@
     <div class="app-shell">
       <header class="hero">
         <div class="hero__content">
+          <img
+            src="/realm-logo.svg"
+            alt="Realm"
+            class="hero__logo"
+            width="175"
+            height="57"
+            decoding="async"
+          />
           <p class="hero__eyebrow">Realm Cost Explorer</p>
           <h1 class="hero__title">Estimate your integration spend in minutes</h1>
           <p class="hero__subtitle">
@@ -259,7 +267,7 @@
               <dd class="metrics__value" id="monthlyEvents">--</dd>
             </div>
             <div class="metrics__item">
-              <dt class="metrics__label">- Current Cost</dt>
+              <dt class="metrics__label">- SIEM Cost</dt>
               <dd class="metrics__value metrics__value--with-tooltip">
                 <span id="standardCost">--</span>
                 <button
@@ -267,19 +275,19 @@
                   class="metrics__tooltip-trigger"
                   data-role="tooltip-trigger"
                   data-tooltip-target="standardBreakdown"
-                  data-tooltip-label="Standard cost breakdown"
+                  data-tooltip-label="SIEM cost breakdown"
                   aria-expanded="false"
                   aria-describedby="standardBreakdown"
                   hidden
                 >
                   <span aria-hidden="true" class="metrics__tooltip-icon">i</span>
-                  <span class="sr-only">Show standard cost breakdown</span>
+                  <span class="sr-only">Show SIEM cost breakdown</span>
                 </button>
                 <span class="sr-only" id="standardBreakdown" data-role="tooltip-text"></span>
               </dd>
             </div>
             <div class="metrics__item">
-              <dt class="metrics__label">Realm optimized cost</dt>
+              <dt class="metrics__label">With Realm</dt>
               <dd class="metrics__value metrics__value--highlight metrics__value--with-tooltip">
                 <span id="realmCost">--</span>
                 <button
@@ -306,13 +314,52 @@
               <p class="metrics__actions-copy">
                 Download a polished PDF to brief stakeholders or attach to planning docs.
               </p>
-              <button
-                type="button"
-                class="metrics__export-button"
-                data-role="export-pdf-button"
-              >
-                Download executive summary PDF
-              </button>
+              <form class="metrics__export-form" data-role="export-pdf-form">
+                <label class="field">
+                  <span class="field__label">Company name</span>
+                  <input
+                    id="exportCompanyInput"
+                    name="companyName"
+                    type="text"
+                    class="field__input"
+                    autocomplete="organization"
+                    placeholder="Acme Corporation"
+                    required
+                  />
+                </label>
+                <label class="field">
+                  <span class="field__label">Primary contact</span>
+                  <input
+                    id="exportContactInput"
+                    name="contactName"
+                    type="text"
+                    class="field__input"
+                    autocomplete="name"
+                    placeholder="Ada Lovelace"
+                    required
+                  />
+                </label>
+                <label class="field">
+                  <span class="field__label">Work email</span>
+                  <input
+                    id="exportEmailInput"
+                    name="contactEmail"
+                    type="email"
+                    inputmode="email"
+                    class="field__input"
+                    autocomplete="email"
+                    placeholder="you@company.com"
+                    required
+                  />
+                </label>
+                <button
+                  type="submit"
+                  class="metrics__export-button"
+                  data-role="export-pdf-button"
+                >
+                  Download executive summary PDF
+                </button>
+              </form>
             </div>
             <div
               class="metrics__item metrics__item--action metrics__item--comparison"
@@ -361,6 +408,42 @@
                 <p class="field__error field--hidden" data-role="cribl-error-message"></p>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section class="panel panel--longform panel--demo" aria-labelledby="interactive-demo-heading">
+          <div class="panel__header">
+            <h2 class="panel__title" id="interactive-demo-heading">See Realm in action</h2>
+            <p class="panel__subtitle">
+              Explore the interactive Storylane walkthrough to understand how Realm orchestrates telemetry.
+            </p>
+          </div>
+          <div class="demo">
+            <div class="demo__embed">
+              <script async src="https://js.storylane.io/js/v2/storylane.js"></script>
+              <div
+                class="sl-embed"
+                style="position:relative;padding-bottom:calc(56.25% + 25px);width:100%;height:0;transform:scale(1)"
+              >
+                <iframe
+                  loading="lazy"
+                  class="sl-demo"
+                  src="https://realm.storylane.io/demo/xcevkr4y7sa6?embed=inline"
+                  name="sl-embed"
+                  allow="fullscreen"
+                  allowfullscreen
+                  style="position:absolute;top:0;left:0;width:100%!important;height:100%!important;border:1px solid rgba(63,95,172,0.35);box-shadow: 0px 0px 18px rgba(26, 19, 72, 0.15);border-radius:10px;box-sizing:border-box;"
+                ></iframe>
+              </div>
+            </div>
+            <a
+              class="demo__cta metrics__export-button"
+              href="https://realm.security/request-a-demo/"
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              Request a Demo
+            </a>
           </div>
         </section>
 
@@ -422,27 +505,84 @@
           </div>
           <div class="faq">
             <article class="faq__item">
-              <h3 class="faq__question">How accurate are the Realm Cost Calculator estimates?</h3>
-              <p class="faq__answer">
-                The tool combines publicly available egress pricing, published SIEM ingestion tiers, and Realm's own platform
-                rates. Estimates are intentionally conservative and serve as a planning baseline before we tailor a proposal to
-                your retention and regional needs.
-              </p>
+              <h3 class="faq__question">
+                <button
+                  class="faq__toggle"
+                  type="button"
+                  id="faq-question-1"
+                  aria-expanded="false"
+                  aria-controls="faq-answer-1"
+                >
+                  <span class="faq__label">How accurate are the Realm Cost Calculator estimates?</span>
+                  <span class="faq__icon" aria-hidden="true"></span>
+                </button>
+              </h3>
+              <div
+                class="faq__answer"
+                id="faq-answer-1"
+                role="region"
+                aria-labelledby="faq-question-1"
+                hidden
+              >
+                <p>
+                  The tool combines publicly available egress pricing, published SIEM ingestion tiers, and Realm's own platform
+                  rates. Estimates are intentionally conservative and serve as a planning baseline before we tailor a proposal to
+                  your retention and regional needs.
+                </p>
+              </div>
             </article>
             <article class="faq__item">
-              <h3 class="faq__question">Which data sources and SIEM destinations can I model?</h3>
-              <p class="faq__answer">
-                You can choose from 19 enterprise-grade sources and the top 20 SIEM or observability platforms. This includes
-                providers such as AWS CloudTrail, CrowdStrike, Okta, Palo Alto Networks, Splunk, Microsoft Sentinel, and Sumo
-                Logic. New integrations are added frequently.
-              </p>
+              <h3 class="faq__question">
+                <button
+                  class="faq__toggle"
+                  type="button"
+                  id="faq-question-2"
+                  aria-expanded="false"
+                  aria-controls="faq-answer-2"
+                >
+                  <span class="faq__label">Which data sources and SIEM destinations can I model?</span>
+                  <span class="faq__icon" aria-hidden="true"></span>
+                </button>
+              </h3>
+              <div
+                class="faq__answer"
+                id="faq-answer-2"
+                role="region"
+                aria-labelledby="faq-question-2"
+                hidden
+              >
+                <p>
+                  You can choose from 19 enterprise-grade sources and the top 20 SIEM or observability platforms. This includes
+                  providers such as AWS CloudTrail, CrowdStrike, Okta, Palo Alto Networks, Splunk, Microsoft Sentinel, and Sumo
+                  Logic. New integrations are added frequently.
+                </p>
+              </div>
             </article>
             <article class="faq__item">
-              <h3 class="faq__question">What happens after I find a scenario that works?</h3>
-              <p class="faq__answer">
-                Export the summary for your stakeholders and connect with the Realm team. We will validate assumptions, factor in
-                negotiated discounts, and map a migration plan that keeps compliance and retention requirements intact.
-              </p>
+              <h3 class="faq__question">
+                <button
+                  class="faq__toggle"
+                  type="button"
+                  id="faq-question-3"
+                  aria-expanded="false"
+                  aria-controls="faq-answer-3"
+                >
+                  <span class="faq__label">What happens after I find a scenario that works?</span>
+                  <span class="faq__icon" aria-hidden="true"></span>
+                </button>
+              </h3>
+              <div
+                class="faq__answer"
+                id="faq-answer-3"
+                role="region"
+                aria-labelledby="faq-question-3"
+                hidden
+              >
+                <p>
+                  Export the summary for your stakeholders and connect with the Realm team. We will validate assumptions, factor
+                  in negotiated discounts, and map a migration plan that keeps compliance and retention requirements intact.
+                </p>
+              </div>
             </article>
           </div>
         </section>
