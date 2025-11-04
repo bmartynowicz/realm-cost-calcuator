@@ -1,0 +1,8 @@
+{
+  "uid": "page-realm-cost-calculator",
+  "type": "page",
+  "config": {
+    "entrypoint": "/app/pages/realm-cost-calculator/index.html",
+    "location": "realm-cost-calculator"
+  }
+}

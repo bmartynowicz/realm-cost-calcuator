@@ -104,7 +104,7 @@ type RealmLogoAsset = {
   height: number;
 };
 
-const REALM_LOGO_PATH = '/Realm-Security-Logo.png';
+const REALM_LOGO_PATH = 'Realm-Security-Logo.png';
 
 let realmLogoAsset: RealmLogoAsset | null | undefined;
 

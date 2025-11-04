@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Realm Cost Calculator</title>
+    <meta
+      name="description"
+      content="Realm Cost Calculator helps security and data teams estimate ingestion and egress costs across 19 prioritized security data sources and 20 SIEM destinations."
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta property="og:site_name" content="Realm" />
+    <meta
+      property="og:title"
+      content="Realm Cost Calculator | Estimate Data Integration Spend"
+    />
+    <meta
+      property="og:description"
+      content="Instantly model log volume costs versus Realm's optimized pricing and quantify projected savings before you ship telemetry."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://realm.security/realm-cost-calculator" />
+    <meta
+      property="og:image"
+      content="https://realm.security/assets/realm-cost-calculator-preview.png"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Realm Cost Calculator | Estimate Data Integration Spend"
+    />
+    <meta
+      name="twitter:description"
+      content="Discover how much you can save by routing enterprise telemetry through Realm's unified pipeline."
+    />
+    <meta
+      name="twitter:image"
+      content="https://realm.security/assets/realm-cost-calculator-preview.png"
+    />
+    <link rel="canonical" href="https://realm.security/realm-cost-calculator" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "name": "Realm Cost Calculator",
+            "applicationCategory": "BusinessApplication",
+            "applicationSubCategory": "SecurityAnalytics",
+            "operatingSystem": "Web",
+            "description": "Interactive calculator for projecting Realm integration costs against traditional data pipelines across popular SIEM and observability platforms.",
+            "url": "https://realm.security/realm-cost-calculator",
+            "provider": {
+              "@type": "Organization",
+              "name": "Realm",
+              "url": "https://realm.security"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "How accurate are the Realm Cost Calculator estimates?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "The calculator combines published pricing for data egress, ingestion, and Realm platform rates to produce planning-grade estimates. Final proposals factor in your retention goals, regional constraints, and negotiated enterprise agreements."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Which data sources and SIEM platforms are supported?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Realm maintains pricing data for 19 enterprise sources - such as Okta, CrowdStrike, and Palo Alto Networks - and the 20 most common SIEM and observability destinations, including Splunk, Microsoft Sentinel, and Sumo Logic."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I export Realm Cost Calculator scenarios?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. After modeling your volumes you can export a summary to share with finance or procurement, and our team can help translate the scenario into a custom contract."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+    <script type="module" crossorigin src="./assets/index-BLBXkXHi.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DZA6jXdi.css">
+  </head>
+  <body id="top">
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+    <div class="app-shell">
+      <header class="hero">
+        <div class="hero__content">
+          <img
+            src="./assets/Realm-Security-Logo.png"
+            alt="Realm"
+            class="hero__logo"
+            width="260"
+            height="91"
+            decoding="async"
+          />
+          <h1 class="hero__title">Understand your current security log volume spend</h1>
+          <p class="hero__subtitle">
+            Choose from 19 security data sources and the top 20 SIEM destinations,
+            enter the average daily traffic you expect to synchronize, and instantly
+            compare log volume costs against Realm's optimized pricing.
+          </p>
+        </div>
+        <div class="hero__meta">
+          <p class="hero__badge">Realm Cost Explorer</p>
+        </div>
+      </header>
+
+      <main class="layout" id="mainContent">
+        <section class="panel" aria-labelledby="source-heading">
+          <div class="panel__header">
+            <h2 class="panel__title" id="source-heading">Source configuration</h2>
+            <p class="panel__subtitle">
+              Select the network, identity, infrastructure, or endpoint system
+              generating the data and we will use its published egress pricing.
+            </p>
+          </div>
+          <label class="field">
+            <span class="field__label">Data source</span>
+            <div class="field__search">
+              <input
+                type="search"
+                class="field__input field__input--search"
+                data-role="source-search"
+                placeholder="Search sources"
+                aria-label="Search sources"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </div>
+            <select
+              id="sourceSelect"
+              class="field__input"
+              multiple
+              size="6"
+              aria-describedby="sourceHelp sourceSummary"
+            ></select>
+            <span id="sourceHelp" class="field__hint"
+              >Use search to filter vendors, then click to toggle; choose any combination you need.</span
+            >
+            <span id="sourceSummary" class="field__hint"></span>
+          </label>
+        </section>
+
+        <section class="panel" aria-labelledby="destination-heading">
+          <div class="panel__header">
+            <h2 class="panel__title" id="destination-heading">Destination configuration</h2>
+            <p class="panel__subtitle">
+              Where is the data going? Pick one of the top 20 SIEM platforms to
+              estimate ingestion costs.
+            </p>
+          </div>
+          <label class="field">
+            <span class="field__label">Destination</span>
+            <select id="destinationSelect" class="field__input"></select>
+            <span id="destinationSummary" class="field__hint"></span>
+          </label>
+        </section>
+
+        <section class="panel" aria-labelledby="traffic-heading">
+          <div class="panel__header">
+            <h2 class="panel__title" id="traffic-heading">Log volume assumptions</h2>
+            <p class="panel__subtitle">
+              Start with an estimated average daily log volume in gigabytes, then fine-tune the
+              numbers to match your environment.
+            </p>
+          </div>
+          <label class="field">
+            <span class="field__label">Company size</span>
+            <select
+              id="organizationSize"
+              class="field__input"
+              aria-describedby="organizationSizeHelp"
+            >
+              <option value="under-1000-gb">Less than 1,000 employees</option>
+              <option value="1000-5000-gb">1,000 - 5,000 employees</option>
+              <option value="over-5000-gb">5,000+ employees</option>
+            </select>
+            <span id="organizationSizeHelp" class="field__hint"
+              >Pick the employee band closest to your organization and we'll prefill a realistic
+              daily log volume. You can override the number anytime.</span
+            >
+          </label>
+          <label class="field">
+            <span class="field__label">Average daily log volume</span>
+            <div class="field__input field__input--with-addon">
+              <input
+                type="number"
+                id="trafficInput"
+                name="traffic"
+                inputmode="numeric"
+                min="0"
+                step="1"
+                placeholder="e.g. 750"
+                aria-describedby="trafficHelp trafficError"
+              />
+              <div class="field__addon field__addon--select">
+                <select id="trafficUnit" class="field__addon__control" aria-label="Traffic unit">
+                  <option value="gigabytes" selected>Gigabytes</option>
+                  <option value="terabytes">Terabytes</option>
+                  <option value="events">Events</option>
+                </select>
+              </div>
+            </div>
+            <span id="trafficHelp" class="field__hint"
+              >Switch between gigabytes, terabytes, or events. Realm converts volumes using typical
+              event sizes per source. Monthly totals assume 30 days.</span
+            >
+            <span id="trafficError" class="field__error" role="alert"></span>
+          </label>
+          <p class="field__hint" id="trafficRecommendation" data-role="traffic-recommendation"></p>
+        </section>
+
+        <section class="panel panel--accent" aria-labelledby="results-heading">
+          <div class="panel__header">
+            <h2 class="panel__title" id="results-heading">Cost projection</h2>
+            <p class="panel__subtitle">
+              Instantly compare expected log volume costs with and without Realm's
+              optimization.
+            </p>
+          </div>
+          <dl class="metrics">
+            <div class="metrics__item metrics__item--savings">
+              <dt class="metrics__label metrics__label--savings">Projected monthly savings</dt>
+              <dd class="metrics__value metrics__value--with-tooltip metrics__value--savings">
+                <span id="savings">--</span>
+                <button
+                  type="button"
+                  class="metrics__tooltip-trigger"
+                  data-role="tooltip-trigger"
+                  data-tooltip-target="savingsPercent"
+                  data-tooltip-label="Projected savings details"
+                  aria-expanded="false"
+                  aria-describedby="savingsPercent"
+                  hidden
+                >
+                  <span aria-hidden="true" class="metrics__tooltip-icon">i</span>
+                  <span class="sr-only">Show projected savings explanation</span>
+                </button>
+                <span class="sr-only" id="savingsPercent" data-role="tooltip-text"></span>
+              </dd>
+            </div>
+            <div class="metrics__item">
+              <dt class="metrics__label">Monthly events</dt>
+              <dd class="metrics__value" id="monthlyEvents">--</dd>
+            </div>
+            <div class="metrics__item">
+              <dt class="metrics__label">- Current Cost</dt>
+              <dd class="metrics__value metrics__value--with-tooltip">
+                <span id="standardCost">--</span>
+                <button
+                  type="button"
+                  class="metrics__tooltip-trigger"
+                  data-role="tooltip-trigger"
+                  data-tooltip-target="standardBreakdown"
+                  data-tooltip-label="Current cost breakdown"
+                  aria-expanded="false"
+                  aria-describedby="standardBreakdown"
+                  hidden
+                >
+                  <span aria-hidden="true" class="metrics__tooltip-icon">i</span>
+                  <span class="sr-only">Show current cost breakdown</span>
+                </button>
+                <span class="sr-only" id="standardBreakdown" data-role="tooltip-text"></span>
+              </dd>
+            </div>
+            <div class="metrics__item">
+              <dt class="metrics__label">With Realm</dt>
+              <dd class="metrics__value metrics__value--highlight metrics__value--with-tooltip">
+                <span id="realmCost">--</span>
+                <button
+                  type="button"
+                  class="metrics__tooltip-trigger"
+                  data-role="tooltip-trigger"
+                  data-tooltip-target="realmBreakdown"
+                  data-tooltip-label="Realm cost breakdown"
+                  aria-expanded="false"
+                  aria-describedby="realmBreakdown"
+                  hidden
+                >
+                  <span aria-hidden="true" class="metrics__tooltip-icon">i</span>
+                  <span class="sr-only">Show Realm cost breakdown</span>
+                </button>
+                <span class="sr-only" id="realmBreakdown" data-role="tooltip-text"></span>
+              </dd>
+              <dd class="metrics__description field--hidden" id="calibrationNote"></dd>
+            </div>
+          </dl>
+          <div class="metrics__actions" aria-labelledby="results-heading">
+            <div class="metrics__item metrics__item--action metrics__item--export">
+              <h3 class="metrics__actions-title">Share this scenario</h3>
+              <p class="metrics__actions-copy">
+                Download a polished PDF to brief stakeholders or attach to planning docs.
+              </p>
+              <form class="metrics__export-form" data-role="export-pdf-form">
+                <label class="field">
+                  <span class="field__label">Company name</span>
+                  <input
+                    id="exportCompanyInput"
+                    name="companyName"
+                    type="text"
+                    class="field__input"
+                    autocomplete="organization"
+                    placeholder="Acme Corporation"
+                    required
+                  />
+                </label>
+                <label class="field">
+                  <span class="field__label">Primary contact</span>
+                  <input
+                    id="exportContactInput"
+                    name="contactName"
+                    type="text"
+                    class="field__input"
+                    autocomplete="name"
+                    placeholder="Ada Lovelace"
+                    required
+                  />
+                </label>
+                <label class="field">
+                  <span class="field__label">Work email</span>
+                  <input
+                    id="exportEmailInput"
+                    name="contactEmail"
+                    type="email"
+                    inputmode="email"
+                    class="field__input"
+                    autocomplete="email"
+                    placeholder="you@company.com"
+                    required
+                  />
+                </label>
+                <button
+                  type="submit"
+                  class="metrics__export-button"
+                  data-role="export-pdf-button"
+                >
+                  Download executive summary PDF
+                </button>
+              </form>
+            </div>
+            <div
+              class="metrics__item metrics__item--action metrics__item--comparison"
+              data-role="cribl-comparison"
+            >
+              <h3 class="metrics__actions-title">Benchmark against Cribl</h3>
+              <p class="metrics__actions-copy">
+                Unlock an estimated Cribl cost to keep competitive analyses in the same view.
+              </p>
+              <p
+                class="metrics__benchmark-value"
+                id="criblCost"
+                aria-live="polite"
+                data-unlocked="false"
+              >
+                --
+              </p>
+              <button
+                type="button"
+                class="metrics__veil-button"
+                data-role="cribl-reveal-button"
+                aria-controls="criblRevealForm"
+                aria-expanded="false"
+              >
+                Enter work email to unlock
+              </button>
+              <div class="metrics__reveal field--hidden" id="criblRevealForm">
+                <form class="metrics__reveal-form" data-role="cribl-reveal-form" novalidate>
+                  <label class="field">
+                    <span class="field__label">Work email</span>
+                    <input
+                      id="criblEmailInput"
+                      type="email"
+                      inputmode="email"
+                      name="criblEmail"
+                      class="field__input"
+                      autocomplete="email"
+                      placeholder="you@company.com"
+                      required
+                    />
+                  </label>
+                  <button type="submit" class="metrics__reveal-submit">
+                    Unlock estimate
+                  </button>
+                </form>
+                <p class="field__error field--hidden" data-role="cribl-error-message"></p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel panel--longform panel--demo" aria-labelledby="interactive-demo-heading">
+          <div class="panel__header">
+            <h2 class="panel__title" id="interactive-demo-heading">See Realm in action</h2>
+            <p class="panel__subtitle">
+              Explore the interactive Storylane walkthrough to understand how Realm orchestrates telemetry.
+            </p>
+          </div>
+          <div class="demo">
+            <div class="demo__embed">
+              <script async src="https://js.storylane.io/js/v2/storylane.js"></script>
+              <div
+                class="sl-embed"
+                style="position:relative;padding-bottom:calc(56.25% + 25px);width:100%;height:0;transform:scale(1)"
+              >
+                <iframe
+                  loading="lazy"
+                  class="sl-demo"
+                  src="https://realm.storylane.io/demo/xcevkr4y7sa6?embed=inline"
+                  name="sl-embed"
+                  allow="fullscreen"
+                  allowfullscreen
+                  style="position:absolute;top:0;left:0;width:100%!important;height:100%!important;border:1px solid rgba(63,95,172,0.35);box-shadow: 0px 0px 18px rgba(26, 19, 72, 0.15);border-radius:10px;box-sizing:border-box;"
+                ></iframe>
+              </div>
+            </div>
+            <a
+              class="demo__cta metrics__export-button"
+              href="https://realm.security/request-a-demo/"
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              Request a Demo
+            </a>
+          </div>
+        </section>
+
+        <section class="panel panel--longform rich-text" aria-labelledby="how-it-works-heading">
+          <div class="panel__header">
+            <h2 class="panel__title" id="how-it-works-heading">How the calculator works</h2>
+            <p class="panel__subtitle">
+              Blend your telemetry volumes with vendor egress tables and Realm's optimized routing to quickly spot cost deltas.
+            </p>
+          </div>
+          <article>
+            <h3>Model your current stack</h3>
+            <p>
+              Start by selecting the systems that emit your high-volume logs. The dataset includes cloud infrastructure,
+              identity platforms, endpoint detection, firewall appliances, and SaaS security tools. Realm keeps pricing
+              information updated so you can evaluate egress charges without chasing vendor PDFs.
+            </p>
+            <h3>Compare Realm against traditional ingestion</h3>
+            <p>
+              Enter your average daily volume in events or raw data. Realm automatically converts volume to monthly totals,
+              applies Realm optimization, and shows side-by-side cost projections for standard integration pipelines versus
+              Realm's managed routing.
+            </p>
+            <h3>Share data-backed forecasts</h3>
+            <p>
+              Use the projections to brief security leadership, finance, or procurement on projected savings. Adjust the
+              assumptions as your telemetry mix evolves to keep forecasts aligned with reality.
+            </p>
+          </article>
+        </section>
+
+        <section class="panel panel--longform rich-text" aria-labelledby="use-cases-heading">
+          <div class="panel__header">
+            <h2 class="panel__title" id="use-cases-heading">Who benefits from Realm's pricing model</h2>
+            <p class="panel__subtitle">
+              Teams that rely on high-volume security telemetry gain immediate clarity on the ROI of Realm's unified pipeline.
+            </p>
+          </div>
+          <article>
+            <ul>
+              <li><strong>Security operations leaders</strong> validate SIEM ingestion budgets before migrating new log sources.</li>
+              <li><strong>Detection engineers</strong> balance retention requirements with ingestion tiers to avoid surprise overruns.</li>
+              <li><strong>Finance and procurement partners</strong> benchmark Realm proposals against multi-year contracts they manage.</li>
+              <li><strong>Service providers and MSSPs</strong> model customer-by-customer volumes to package Realm-powered offerings.</li>
+            </ul>
+            <p>
+              Realm centralizes telemetry collection, normalizes formats, and orchestrates delivery to multiple destinations.
+              The calculator reflects those efficiencies so you can quantify savings ahead of implementation.
+            </p>
+          </article>
+        </section>
+
+        <section class="panel panel--longform rich-text" aria-labelledby="faq-heading" id="faq">
+          <div class="panel__header">
+            <h2 class="panel__title" id="faq-heading">Realm Cost Calculator FAQ</h2>
+            <p class="panel__subtitle">
+              Answers to common questions from security, data, and finance teams evaluating Realm.
+            </p>
+          </div>
+          <div class="faq">
+            <article class="faq__item">
+              <h3 class="faq__question">
+                <button
+                  class="faq__toggle"
+                  type="button"
+                  id="faq-question-1"
+                  aria-expanded="false"
+                  aria-controls="faq-answer-1"
+                >
+                  <span class="faq__label">How accurate are the Realm Cost Calculator estimates?</span>
+                  <span class="faq__icon" aria-hidden="true"></span>
+                </button>
+              </h3>
+              <div
+                class="faq__answer"
+                id="faq-answer-1"
+                role="region"
+                aria-labelledby="faq-question-1"
+                hidden
+              >
+                <p>
+                  The tool combines publicly available egress pricing, published SIEM ingestion tiers, and Realm's own platform
+                  rates. Estimates are intentionally conservative and serve as a planning baseline before we tailor a proposal to
+                  your retention and regional needs.
+                </p>
+              </div>
+            </article>
+            <article class="faq__item">
+              <h3 class="faq__question">
+                <button
+                  class="faq__toggle"
+                  type="button"
+                  id="faq-question-2"
+                  aria-expanded="false"
+                  aria-controls="faq-answer-2"
+                >
+                  <span class="faq__label">Which data sources and SIEM destinations can I model?</span>
+                  <span class="faq__icon" aria-hidden="true"></span>
+                </button>
+              </h3>
+              <div
+                class="faq__answer"
+                id="faq-answer-2"
+                role="region"
+                aria-labelledby="faq-question-2"
+                hidden
+              >
+                <p>
+                  You can choose from 19 enterprise-grade sources and the top 20 SIEM or observability platforms. This includes
+                  providers such as AWS CloudTrail, CrowdStrike, Okta, Palo Alto Networks, Splunk, Microsoft Sentinel, and Sumo
+                  Logic. New integrations are added frequently.
+                </p>
+              </div>
+            </article>
+            <article class="faq__item">
+              <h3 class="faq__question">
+                <button
+                  class="faq__toggle"
+                  type="button"
+                  id="faq-question-3"
+                  aria-expanded="false"
+                  aria-controls="faq-answer-3"
+                >
+                  <span class="faq__label">What happens after I find a scenario that works?</span>
+                  <span class="faq__icon" aria-hidden="true"></span>
+                </button>
+              </h3>
+              <div
+                class="faq__answer"
+                id="faq-answer-3"
+                role="region"
+                aria-labelledby="faq-question-3"
+                hidden
+              >
+                <p>
+                  Export the summary for your stakeholders and connect with the Realm team. We will validate assumptions, factor
+                  in negotiated discounts, and map a migration plan that keeps compliance and retention requirements intact.
+                </p>
+              </div>
+            </article>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <p>
+          These estimates are for planning purposes only. Contact the Realm team to tailor
+          pricing to your specific workloads and data retention policies.
+        </p>
+      </footer>
+      <a href="#top" class="back-to-top" aria-label="Back to top">
+        <span class="back-to-top__icon" aria-hidden="true">↑</span>
+        <span class="back-to-top__label">Back to top</span>
+      </a>
+    </div>
+  </body>
+</html>
+
