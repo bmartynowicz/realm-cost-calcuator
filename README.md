@@ -9,13 +9,13 @@ approach.
 
 ## Feature highlights
 
-- Organization size presets auto-populate daily traffic and average event size baselines. See
-  [`docs/traffic-baselines.md`](docs/traffic-baselines.md) for the research notes behind each band.
+- Daily volume tiers auto-populate realistic traffic baselines using category-specific event sizes.
+  See [`docs/traffic-baselines.md`](docs/traffic-baselines.md) for the research notes behind each tier.
 - Executive summary PDF export packages the current scenario for finance or procurement stakeholders.
-- Competitive benchmarking compares Realm to a gated Cribl estimate that unlocks with a verified work email.
+- Competitive benchmarking against Cribl is temporarily hidden while we prep the V2 experience.
 - Updated data catalog and supporting research samples live under [`research/`](research/), making it easy to
   trace every assumption back to a published source.
-- Automated Playwright QA runs critical journeys (traffic presets, Cribl gating, and validation) on each build.
+- Automated Playwright QA runs critical journeys (traffic presets and validation) on each build.
 
 ## Getting started
 
@@ -127,6 +127,6 @@ tests critical calculator flows:
 npm run qa
 ```
 
-The scenarios cover traffic presets, Cribl benchmark gating, and validation around the
+The scenarios cover traffic presets and validation around the
 executive summary export. Review the generated traces in `playwright-report/` if a test
 fails during local development or CI.

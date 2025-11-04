@@ -102,7 +102,7 @@
       }
     </script>
   </head>
-  <body>
+  <body id="top">
     <a class="skip-link" href="#mainContent">Skip to main content</a>
     <div class="app-shell">
       <header class="hero">
@@ -131,6 +131,17 @@
           </div>
           <label class="field">
             <span class="field__label">Data source</span>
+            <div class="field__search">
+              <input
+                type="search"
+                class="field__input field__input--search"
+                data-role="source-search"
+                placeholder="Search sources"
+                aria-label="Search sources"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </div>
             <select
               id="sourceSelect"
               class="field__input"
@@ -139,7 +150,7 @@
               aria-describedby="sourceHelp sourceSummary"
             ></select>
             <span id="sourceHelp" class="field__hint"
-              >Click sources to toggle selections; choose any combination you need.</span
+              >Use search to filter vendors, then click to toggle; choose any combination you need.</span
             >
             <span id="sourceSummary" class="field__hint"></span>
           </label>
@@ -162,28 +173,30 @@
 
         <section class="panel" aria-labelledby="traffic-heading">
           <div class="panel__header">
-            <h2 class="panel__title" id="traffic-heading">Traffic assumptions</h2>
+            <h2 class="panel__title" id="traffic-heading">Log volume assumptions</h2>
             <p class="panel__subtitle">
-              Provide the average number of events that will flow through Realm each day.
+              Start with an estimated average daily log volume in gigabytes, then fine-tune the
+              numbers to match your environment.
             </p>
           </div>
           <label class="field">
-            <span class="field__label">Organization size</span>
+            <span class="field__label">Company size</span>
             <select
               id="organizationSize"
               class="field__input"
               aria-describedby="organizationSizeHelp"
             >
-              <option value="hundreds">Hundreds (100-999 employees)</option>
-              <option value="thousands">Thousands (1,000-9,999 employees)</option>
-              <option value="tens-of-thousands">Tens of thousands (10,000+ employees)</option>
+              <option value="under-1000-gb">Less than 1,000 employees</option>
+              <option value="1000-5000-gb">1,000 - 5,000 employees</option>
+              <option value="over-5000-gb">5,000+ employees</option>
             </select>
             <span id="organizationSizeHelp" class="field__hint"
-              >Select your employee band to prefill realistic daily traffic assumptions.</span
+              >Pick the employee band closest to your organization and we'll prefill a realistic
+              daily log volume. You can override the number anytime.</span
             >
           </label>
           <label class="field">
-            <span class="field__label">Average daily traffic</span>
+            <span class="field__label">Average daily log volume</span>
             <div class="field__input field__input--with-addon">
               <input
                 type="number"
@@ -191,41 +204,23 @@
                 name="traffic"
                 inputmode="numeric"
                 min="0"
-                step="1000"
-                placeholder="e.g. 25000"
+                step="1"
+                placeholder="e.g. 750"
                 aria-describedby="trafficHelp trafficError"
               />
               <div class="field__addon field__addon--select">
                 <select id="trafficUnit" class="field__addon__control" aria-label="Traffic unit">
-                  <option value="events">Events</option>
-                  <option value="gigabytes">Gigabytes</option>
+                  <option value="gigabytes" selected>Gigabytes</option>
                   <option value="terabytes">Terabytes</option>
+                  <option value="events">Events</option>
                 </select>
               </div>
             </div>
             <span id="trafficHelp" class="field__hint"
-              >Switch between events or data volume. Monthly totals assume 30 days.</span
+              >Switch between gigabytes, terabytes, or events. Realm converts volumes using typical
+              event sizes per source. Monthly totals assume 30 days.</span
             >
             <span id="trafficError" class="field__error" role="alert"></span>
-          </label>
-          <label class="field field--hidden" data-role="event-size-field">
-            <span class="field__label">Average event size</span>
-            <div class="field__input field__input--with-addon field__input--with-addon-right">
-              <input
-                type="number"
-                id="eventSizeInput"
-                name="eventSize"
-                inputmode="decimal"
-                min="0"
-                step="0.1"
-                placeholder="e.g. 1.5"
-                aria-describedby="eventSizeHelp trafficError"
-              />
-              <span class="field__addon field__addon--unit">KB</span>
-            </div>
-            <span id="eventSizeHelp" class="field__hint"
-              >Used to convert gigabytes or terabytes into events. Defaults to 1 KB if left blank.</span
-            >
           </label>
           <p class="field__hint" id="trafficRecommendation" data-role="traffic-recommendation"></p>
         </section>
@@ -239,25 +234,70 @@
             </p>
           </div>
           <dl class="metrics">
+            <div class="metrics__item metrics__item--savings">
+              <dt class="metrics__label metrics__label--savings">Projected monthly savings</dt>
+              <dd class="metrics__value metrics__value--with-tooltip metrics__value--savings">
+                <span id="savings">--</span>
+                <button
+                  type="button"
+                  class="metrics__tooltip-trigger"
+                  data-role="tooltip-trigger"
+                  data-tooltip-target="savingsPercent"
+                  data-tooltip-label="Projected savings details"
+                  aria-expanded="false"
+                  aria-describedby="savingsPercent"
+                  hidden
+                >
+                  <span aria-hidden="true" class="metrics__tooltip-icon">i</span>
+                  <span class="sr-only">Show projected savings explanation</span>
+                </button>
+                <span class="sr-only" id="savingsPercent" data-role="tooltip-text"></span>
+              </dd>
+            </div>
             <div class="metrics__item">
               <dt class="metrics__label">Monthly events</dt>
               <dd class="metrics__value" id="monthlyEvents">--</dd>
             </div>
             <div class="metrics__item">
-              <dt class="metrics__label">Standard integration cost</dt>
-              <dd class="metrics__value" id="standardCost">--</dd>
-              <dd class="metrics__description" id="standardBreakdown"></dd>
+              <dt class="metrics__label">- Current Cost</dt>
+              <dd class="metrics__value metrics__value--with-tooltip">
+                <span id="standardCost">--</span>
+                <button
+                  type="button"
+                  class="metrics__tooltip-trigger"
+                  data-role="tooltip-trigger"
+                  data-tooltip-target="standardBreakdown"
+                  data-tooltip-label="Standard cost breakdown"
+                  aria-expanded="false"
+                  aria-describedby="standardBreakdown"
+                  hidden
+                >
+                  <span aria-hidden="true" class="metrics__tooltip-icon">i</span>
+                  <span class="sr-only">Show standard cost breakdown</span>
+                </button>
+                <span class="sr-only" id="standardBreakdown" data-role="tooltip-text"></span>
+              </dd>
             </div>
             <div class="metrics__item">
               <dt class="metrics__label">Realm optimized cost</dt>
-              <dd class="metrics__value metrics__value--highlight" id="realmCost">--</dd>
-              <dd class="metrics__description" id="realmBreakdown"></dd>
+              <dd class="metrics__value metrics__value--highlight metrics__value--with-tooltip">
+                <span id="realmCost">--</span>
+                <button
+                  type="button"
+                  class="metrics__tooltip-trigger"
+                  data-role="tooltip-trigger"
+                  data-tooltip-target="realmBreakdown"
+                  data-tooltip-label="Realm cost breakdown"
+                  aria-expanded="false"
+                  aria-describedby="realmBreakdown"
+                  hidden
+                >
+                  <span aria-hidden="true" class="metrics__tooltip-icon">i</span>
+                  <span class="sr-only">Show Realm cost breakdown</span>
+                </button>
+                <span class="sr-only" id="realmBreakdown" data-role="tooltip-text"></span>
+              </dd>
               <dd class="metrics__description field--hidden" id="calibrationNote"></dd>
-            </div>
-            <div class="metrics__item metrics__item--savings">
-              <dt class="metrics__label">Projected monthly savings</dt>
-              <dd class="metrics__value" id="savings">--</dd>
-              <dd class="metrics__description" id="savingsPercent"></dd>
             </div>
           </dl>
           <div class="metrics__actions" aria-labelledby="results-heading">
@@ -414,6 +454,10 @@
           pricing to your specific workloads and data retention policies.
         </p>
       </footer>
+      <a href="#top" class="back-to-top" aria-label="Back to top">
+        <span class="back-to-top__icon" aria-hidden="true">↑</span>
+        <span class="back-to-top__label">Back to top</span>
+      </a>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

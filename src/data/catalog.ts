@@ -14,6 +14,13 @@ export interface Endpoint {
   trafficCategory?: TrafficCategory;
 }
 
+const DESTINATION_ALLOWLIST = new Set<Endpoint['id']>([
+  'splunk-es',
+  'sumo-logic-siem',
+  'microsoft-sentinel',
+  'crowdstrike-next-gen-siem',
+]);
+
 export const sources: Endpoint[] = [
   {
     id: 'aws-cloudtrail',
@@ -169,7 +176,7 @@ export const sources: Endpoint[] = [
   },
 ];
 
-export const destinations: Endpoint[] = [
+const allDestinations: Endpoint[] = [
   {
     id: 'splunk-es',
     label: 'Splunk Enterprise Security',
@@ -183,6 +190,14 @@ export const destinations: Endpoint[] = [
     description: 'Azure-native SIEM with pay-as-you-go log analytics ingestion.',
     costPerMillionEvents: 27,
     realmOptimization: 0.34,
+  },
+  {
+    id: 'crowdstrike-next-gen-siem',
+    label: 'CrowdStrike Falcon Next-Gen SIEM',
+    description:
+      'CrowdStrike-managed SIEM/XDR service built on Falcon LogScale with automated response.',
+    costPerMillionEvents: 28,
+    realmOptimization: 0.35,
   },
   {
     id: 'ibm-qradar',
@@ -311,3 +326,7 @@ export const destinations: Endpoint[] = [
     realmOptimization: 0.3,
   },
 ];
+
+export const destinations: Endpoint[] = allDestinations.filter((destination) =>
+  DESTINATION_ALLOWLIST.has(destination.id),
+);

@@ -9,43 +9,24 @@ test.describe('Realm Cost Calculator experience', () => {
     const trafficInput = page.locator('#trafficInput');
     const trafficRecommendation = page.locator('#trafficRecommendation');
     const trafficUnit = page.locator('#trafficUnit');
-    const eventSizeField = page.locator('[data-role="event-size-field"]');
     const realmCost = page.locator('#realmCost');
 
+    await expect(trafficUnit).toHaveValue('gigabytes');
     await expect(trafficInput).not.toHaveValue('');
-    await expect(trafficRecommendation).toContainText('events/day');
-    await expect(eventSizeField).toBeHidden();
+    await expect(trafficRecommendation).toContainText('GB per day');
     await expect(realmCost).toHaveText(/^\$\d/);
 
-    await trafficUnit.selectOption('gigabytes');
-    await expect(eventSizeField).toBeVisible();
-    await expect(trafficRecommendation).toContainText('KB per event');
-
     await trafficUnit.selectOption('events');
-    await expect(eventSizeField).toBeHidden();
+    await expect(trafficInput).toHaveAttribute('placeholder', 'e.g. 2500000');
+    await expect(trafficRecommendation).toContainText('events');
+
+    await trafficUnit.selectOption('terabytes');
+    await expect(trafficInput).toHaveAttribute('placeholder', 'e.g. 6.5');
   });
 
-  test('gates the Cribl comparison behind a business email', async ({ page }) => {
-    const revealButton = page.locator('[data-role="cribl-reveal-button"]');
-    const criblValue = page.locator('#criblCost');
-    const revealForm = page.locator('[data-role="cribl-reveal-form"]');
-    const emailInput = page.locator('#criblEmailInput');
-    const errorMessage = page.locator('[data-role="cribl-error-message"]');
-
-    await expect(criblValue).toHaveText('--');
-    await revealButton.click();
-    await expect(revealForm).toBeVisible();
-
-    await emailInput.fill('analyst@gmail.com');
-    await revealForm.locator('button[type="submit"]').click();
-    await expect(errorMessage).toHaveText(/company email/i);
-
-    await emailInput.fill('analyst@realm.build');
-    await revealForm.locator('button[type="submit"]').click();
-
-    await expect(revealButton).toBeDisabled();
-    await expect(criblValue).toHaveAttribute('data-unlocked', 'true');
-    await expect(criblValue).toHaveText(/^\$\d/);
+  test('omits the Cribl benchmark UI entirely', async ({ page }) => {
+    const comparisonCard = page.locator('[data-role="cribl-comparison"]');
+    await expect(comparisonCard).toHaveCount(0);
   });
 
   test('blocks invalid traffic inputs and re-enables exports once fixed', async ({ page }) => {

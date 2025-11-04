@@ -219,12 +219,13 @@ type ExportSnapshot = CalculationResult & {
   recommendation: TrafficRecommendation;
   dailyInput: number;
   dailyEvents: number;
-  eventSizeKb: number;
+  averageEventSizeKb: number;
   criblCost: number;
   criblEstimateUnlocked: boolean;
 };
 
 const sourceSelect = document.querySelector<HTMLSelectElement>('#sourceSelect');
+const sourceSearchInput = document.querySelector<HTMLInputElement>('[data-role="source-search"]');
 const destinationSelect = document.querySelector<HTMLSelectElement>('#destinationSelect');
 const organizationSizeSelect = document.querySelector<HTMLSelectElement>('#organizationSize');
 const trafficInput = document.querySelector<HTMLInputElement>('#trafficInput');
@@ -238,9 +239,6 @@ const monthlyEventsEl = document.querySelector<HTMLElement>('#monthlyEvents');
 const standardCostEl = document.querySelector<HTMLElement>('#standardCost');
 const realmCostEl = document.querySelector<HTMLElement>('#realmCost');
 const savingsEl = document.querySelector<HTMLElement>('#savings');
-const standardBreakdownEl = document.querySelector<HTMLElement>('#standardBreakdown');
-const realmBreakdownEl = document.querySelector<HTMLElement>('#realmBreakdown');
-const savingsPercentEl = document.querySelector<HTMLElement>('#savingsPercent');
 const calibrationNoteEl = document.querySelector<HTMLElement>('#calibrationNote');
 const trafficRecommendationEl = document.querySelector<HTMLParagraphElement>('#trafficRecommendation');
 const criblCostEl = ENABLE_CRIBL_COMPARISON
@@ -278,8 +276,9 @@ const requiredOrganizationSizeSelect = assertElement(
 );
 const requiredTrafficInput = assertElement(trafficInput, 'Traffic input');
 const requiredTrafficUnit = assertElement(trafficUnitSelect, 'Traffic unit select');
-const requiredEventSizeInput = assertElement(eventSizeInput, 'Event size input');
-const requiredEventSizeField = assertElement(eventSizeField, 'Event size field');
+const optionalSourceSearchInput = sourceSearchInput ?? null;
+const optionalEventSizeInput = eventSizeInput ?? null;
+const optionalEventSizeField = eventSizeField ?? null;
 const requiredSourceSummary = assertElement(sourceSummary, 'Source summary');
 const requiredDestinationSummary = assertElement(destinationSummary, 'Destination summary');
 const requiredTrafficError = assertElement(trafficError, 'Traffic error');
@@ -287,18 +286,121 @@ const requiredMonthlyEvents = assertElement(monthlyEventsEl, 'Monthly events');
 const requiredStandardCost = assertElement(standardCostEl, 'Standard cost');
 const requiredRealmCost = assertElement(realmCostEl, 'Realm cost');
 const requiredSavings = assertElement(savingsEl, 'Savings');
-const requiredStandardBreakdown = assertElement(standardBreakdownEl, 'Standard breakdown');
-const requiredRealmBreakdown = assertElement(realmBreakdownEl, 'Realm breakdown');
-const requiredSavingsPercent = assertElement(savingsPercentEl, 'Savings percent');
 const requiredTrafficRecommendation = assertElement(
   trafficRecommendationEl,
   'Traffic recommendation',
 );
 const requiredExportPdfButton = assertElement(exportPdfButtonEl, 'Export PDF button');
 const optionalCalibrationNote = calibrationNoteEl ?? null;
+let sourceSearchRecords: { option: HTMLOptionElement; tokens: string }[] = [];
 let userTrafficEdited = false;
 let userEventSizeEdited = false;
 let currentRecommendation: TrafficRecommendation | null = null;
+
+const normalizeSearchTerm = (value: string): string =>
+  value
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/gu, '')
+    .toLowerCase();
+
+const buildSourceSearchRecords = (): void => {
+  sourceSearchRecords = Array.from(requiredSourceSelect.options).map((option) => {
+    const endpoint = sources.find((source) => source.id === option.value);
+    const tokens = normalizeSearchTerm(
+      `${option.textContent ?? ''} ${endpoint?.description ?? ''}`,
+    );
+    return { option, tokens };
+  });
+};
+
+const applySourceSearchFilter = (rawQuery: string): void => {
+  const normalizedQuery = normalizeSearchTerm(rawQuery.trim());
+  const hasQuery = normalizedQuery.length > 0;
+
+  for (const record of sourceSearchRecords) {
+    const matches = !hasQuery || record.tokens.includes(normalizedQuery);
+    const keepVisible = matches || record.option.selected;
+    record.option.hidden = !keepVisible;
+  }
+
+  if (hasQuery) {
+    requiredSourceSelect.scrollTop = 0;
+  }
+};
+
+const tooltipTextElements = new Map<string, HTMLElement>();
+document
+  .querySelectorAll<HTMLElement>('[data-role="tooltip-text"]')
+  .forEach((element) => {
+    if (element.id) {
+      tooltipTextElements.set(element.id, element);
+    }
+  });
+
+const tooltipTriggers = new Map<string, HTMLButtonElement>();
+document
+  .querySelectorAll<HTMLButtonElement>('[data-role="tooltip-trigger"]')
+  .forEach((button) => {
+    const target = button.dataset.tooltipTarget;
+    if (!target) {
+      return;
+    }
+    tooltipTriggers.set(target, button);
+    const baseLabel = button.dataset.tooltipLabel?.trim();
+    if (baseLabel) {
+      button.setAttribute('aria-label', baseLabel);
+    }
+    if (!button.hasAttribute('aria-expanded')) {
+      button.setAttribute('aria-expanded', 'false');
+    }
+    const setExpanded = (expanded: boolean) => {
+      button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    };
+    button.addEventListener('mouseenter', () => setExpanded(true));
+    button.addEventListener('mouseleave', () => setExpanded(false));
+    button.addEventListener('focus', () => setExpanded(true));
+    button.addEventListener('blur', () => setExpanded(false));
+    button.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        setExpanded(false);
+        button.blur();
+      }
+    });
+  });
+
+const setTooltipContent = (targetId: string, text: string): void => {
+  const trimmed = text.trim();
+  const textElement = tooltipTextElements.get(targetId);
+  if (textElement) {
+    textElement.textContent = trimmed;
+  }
+  const trigger = tooltipTriggers.get(targetId);
+  if (!trigger) {
+    return;
+  }
+  if (trimmed) {
+    trigger.hidden = false;
+    trigger.dataset.tooltip = trimmed;
+    trigger.setAttribute('title', trimmed);
+    const labelPrefix = trigger.dataset.tooltipLabel?.trim();
+    if (labelPrefix) {
+      trigger.setAttribute('aria-label', `${labelPrefix}: ${trimmed}`);
+    } else {
+      trigger.setAttribute('aria-label', trimmed);
+    }
+  } else {
+    trigger.hidden = true;
+    delete trigger.dataset.tooltip;
+    trigger.removeAttribute('title');
+    const labelPrefix = trigger.dataset.tooltipLabel?.trim();
+    if (labelPrefix) {
+      trigger.setAttribute('aria-label', labelPrefix);
+    } else {
+      trigger.removeAttribute('aria-label');
+    }
+    trigger.setAttribute('aria-expanded', 'false');
+  }
+};
 
 type CriblUiElements = {
   cost: HTMLElement;
@@ -508,24 +610,30 @@ const enableClickToToggleMultiSelect = (select: HTMLSelectElement) => {
     }
 
     event.preventDefault();
+    const previousScrollTop = select.scrollTop;
     target.selected = !target.selected;
     select.dispatchEvent(new Event('change', { bubbles: true }));
+    window.requestAnimationFrame(() => {
+      select.scrollTop = previousScrollTop;
+      if (!target.hidden) {
+        target.focus();
+      } else {
+        select.focus();
+      }
+    });
   });
 };
 
 const getSelectedSourceIds = (): string[] =>
-  Array.from(requiredSourceSelect.selectedOptions).map((option) => option.value);
+  Array.from(requiredSourceSelect.selectedOptions)
+    .map((option) => option.value)
+    .filter((value) => value !== '');
 
 const getSelectedSources = (): Endpoint[] => {
   const selectedIds = getSelectedSourceIds();
-  if (selectedIds.length === 0 && requiredSourceSelect.options.length > 0) {
-    const [firstOption] = Array.from(requiredSourceSelect.options);
-    if (firstOption) {
-      firstOption.selected = true;
-      return [getEndpoint(sources, firstOption.value)];
-    }
+  if (selectedIds.length === 0) {
+    return [];
   }
-
   return selectedIds.map((id) => getEndpoint(sources, id));
 };
 
@@ -556,9 +664,9 @@ const resetOutputs = () => {
   requiredStandardCost.textContent = '--';
   requiredRealmCost.textContent = '--';
   requiredSavings.textContent = '--';
-  requiredStandardBreakdown.textContent = '';
-  requiredRealmBreakdown.textContent = '';
-  requiredSavingsPercent.textContent = '';
+  setTooltipContent('standardBreakdown', '');
+  setTooltipContent('realmBreakdown', '');
+  setTooltipContent('savingsPercent', '');
   updateCriblDisplay('--');
   clearCriblError();
   if (!hasUnlockedCriblEstimate) {
@@ -570,61 +678,90 @@ const resetOutputs = () => {
   }
 };
 
-const applyRecommendation = ({
-  overrideTraffic,
-  overrideEventSize,
-}: { overrideTraffic?: boolean; overrideEventSize?: boolean } = {}) => {
+const applyRecommendation = (
+  {
+    overrideTraffic,
+    overrideEventSize,
+  }: { overrideTraffic?: boolean; overrideEventSize?: boolean } = {},
+) => {
   const size = requiredOrganizationSizeSelect.value as OrganizationSizeKey;
   const selectedSources = getSelectedSources();
-  const primarySource = selectedSources[0] ?? sources[0];
+  const primarySource = selectedSources[0] ?? null;
   if (!primarySource) {
+    currentRecommendation = null;
+    requiredTrafficRecommendation.textContent =
+      'Select at least one source to view recommended traffic.';
     return;
   }
 
   const recommendation = getTrafficRecommendation(primarySource, size);
   currentRecommendation = recommendation;
 
+  const unitValue = requiredTrafficUnit.value as TrafficUnit;
   const shouldOverrideTraffic =
     overrideTraffic ?? (!userTrafficEdited || requiredTrafficInput.value.trim() === '');
   const shouldOverrideEventSize =
-    overrideEventSize ?? (!userEventSizeEdited || requiredEventSizeInput.value.trim() === '');
+    optionalEventSizeInput && unitValue !== 'events'
+      ? overrideEventSize ?? (!userEventSizeEdited || optionalEventSizeInput.value.trim() === '')
+      : false;
 
   if (shouldOverrideTraffic) {
-    if (requiredTrafficUnit.value === 'events') {
+    if (unitValue === 'events') {
       requiredTrafficInput.value = Math.round(recommendation.dailyEvents).toString();
+    } else if (unitValue === 'gigabytes') {
+      const volumeInUnits = recommendation.dailyGigabytes;
+      const decimals = volumeInUnits >= 100 ? 0 : volumeInUnits >= 10 ? 1 : 2;
+      requiredTrafficInput.value = Number(volumeInUnits.toFixed(decimals)).toString();
     } else {
-      const kbPerUnit =
-        requiredTrafficUnit.value === 'gigabytes' ? KB_PER_GIGABYTE : KB_PER_TERABYTE;
-      const volumeInUnits =
-        (recommendation.dailyEvents * recommendation.averageEventSizeKb) / kbPerUnit;
-      const decimals =
-        volumeInUnits >= 100 ? 0 : volumeInUnits >= 10 ? 1 : volumeInUnits >= 1 ? 2 : 3;
+      const volumeInUnits = recommendation.dailyGigabytes / 1_024;
+      const decimals = volumeInUnits >= 100 ? 0 : volumeInUnits >= 10 ? 1 : 2;
       requiredTrafficInput.value = Number(volumeInUnits.toFixed(decimals)).toString();
     }
     userTrafficEdited = false;
   }
 
-  if (shouldOverrideEventSize) {
-    requiredEventSizeInput.value = recommendation.averageEventSizeKb.toFixed(1);
+  if (shouldOverrideEventSize && optionalEventSizeInput) {
+    optionalEventSizeInput.value = recommendation.averageEventSizeKb.toFixed(1);
     userEventSizeEdited = false;
   }
 
   const recommendationSummary = describeTrafficRecommendation(recommendation);
   requiredTrafficRecommendation.textContent =
     selectedSources.length > 1
-      ? `${recommendationSummary} (baseline uses ${primarySource.label} — adjust for additional sources as needed.)`
+      ? `${recommendationSummary} (baseline uses ${primarySource.label}; adjust for additional sources as needed.)`
       : recommendationSummary;
 };
 
 const update = () => {
   const selectedSources = getSelectedSources();
-  const primarySource = selectedSources[0] ?? sources[0];
-  if (!primarySource) {
+  const primarySource = selectedSources[0] ?? null;
+  const destinationId = requiredDestinationSelect.value;
+
+  renderSourcesSummary(requiredSourceSummary, selectedSources);
+
+  let destination: Endpoint | null = null;
+  if (destinationId) {
+    destination = getEndpoint(destinations, destinationId);
+    renderSummary(requiredDestinationSummary, destination);
+    requiredDestinationSummary.title = destination.label;
+  } else {
+    requiredDestinationSummary.textContent = 'Select a destination.';
+    requiredDestinationSummary.removeAttribute('title');
+  }
+
+  if (!primarySource || !destination) {
+    currentRecommendation = primarySource ? currentRecommendation : null;
+    requiredTrafficError.textContent = '';
+    if (!primarySource) {
+      requiredTrafficRecommendation.textContent =
+        'Select at least one source to view recommended traffic.';
+    } else {
+      requiredTrafficRecommendation.textContent = 'Select a destination to calculate costs.';
+    }
+    resetOutputs();
     return;
   }
-  const destination = getEndpoint(destinations, requiredDestinationSelect.value);
-  renderSourcesSummary(requiredSourceSummary, selectedSources);
-  renderSummary(requiredDestinationSummary, destination);
+
   const organizationSizeKey = requiredOrganizationSizeSelect.value as OrganizationSizeKey;
   const recommendation =
     currentRecommendation ?? getTrafficRecommendation(primarySource, organizationSizeKey);
@@ -632,28 +769,27 @@ const update = () => {
   const recommendationSummary = describeTrafficRecommendation(recommendation);
   requiredTrafficRecommendation.textContent =
     selectedSources.length > 1
-      ? `${recommendationSummary} (baseline uses ${primarySource.label} — adjust for additional sources as needed.)`
+      ? `${recommendationSummary} (baseline uses ${primarySource.label}; adjust for additional sources as needed.)`
       : recommendationSummary;
 
   const unit = requiredTrafficUnit.value as TrafficUnit;
-  requiredEventSizeField.classList.toggle('field--hidden', unit === 'events');
 
-  if (unit === 'events') {
+  const isEventsUnit = unit === 'events';
+  optionalEventSizeField?.classList.toggle('field--hidden', isEventsUnit);
+
+  if (isEventsUnit) {
     requiredTrafficInput.step = '1000';
-    requiredTrafficInput.placeholder = 'e.g. 25000';
+    requiredTrafficInput.placeholder = 'e.g. 2500000';
   } else if (unit === 'gigabytes') {
-    requiredTrafficInput.step = '0.1';
-    requiredTrafficInput.placeholder = 'e.g. 12.5';
+    requiredTrafficInput.step = '1';
+    requiredTrafficInput.placeholder = 'e.g. 750';
   } else {
     requiredTrafficInput.step = '0.1';
-    requiredTrafficInput.placeholder = 'e.g. 2.3';
+    requiredTrafficInput.placeholder = 'e.g. 6.5';
   }
 
   const rawTraffic = requiredTrafficInput.value.trim();
   const parsedTraffic = rawTraffic === '' ? 0 : Number.parseFloat(rawTraffic);
-  const rawEventSize = requiredEventSizeInput.value.trim();
-  const parsedEventSize =
-    rawEventSize === '' ? DEFAULT_EVENT_SIZE_KB : Number.parseFloat(rawEventSize);
 
   if (!Number.isFinite(parsedTraffic) || parsedTraffic < 0) {
     requiredTrafficError.textContent = 'Enter a positive number for daily volume.';
@@ -661,18 +797,27 @@ const update = () => {
     return;
   }
 
-  if (unit !== 'events' && (!Number.isFinite(parsedEventSize) || parsedEventSize <= 0)) {
-    requiredTrafficError.textContent = 'Enter a positive average event size in KB.';
-    resetOutputs();
-    return;
-  }
-
   requiredTrafficError.textContent = '';
 
+  let averageEventSizeUsed =
+    recommendation.averageEventSizeKb > 0 ? recommendation.averageEventSizeKb : DEFAULT_EVENT_SIZE_KB;
+  if (!isEventsUnit) {
+    if (optionalEventSizeInput) {
+      const rawEventSize = optionalEventSizeInput.value.trim();
+      const parsedEventSize = rawEventSize === '' ? averageEventSizeUsed : Number.parseFloat(rawEventSize);
+      if (!Number.isFinite(parsedEventSize) || parsedEventSize <= 0) {
+        requiredTrafficError.textContent = 'Enter a positive average event size in KB.';
+        resetOutputs();
+        return;
+      }
+      averageEventSizeUsed = parsedEventSize;
+    }
+  }
+
   let dailyEvents = parsedTraffic;
-  if (unit !== 'events') {
+  if (!isEventsUnit) {
     const kbPerUnit = unit === 'gigabytes' ? KB_PER_GIGABYTE : KB_PER_TERABYTE;
-    dailyEvents = (parsedTraffic * kbPerUnit) / parsedEventSize;
+    dailyEvents = averageEventSizeUsed > 0 ? (parsedTraffic * kbPerUnit) / averageEventSizeUsed : 0;
   }
 
   const {
@@ -696,9 +841,10 @@ const update = () => {
   requiredStandardCost.textContent = formatCurrency(Math.max(0, standardCost));
   requiredRealmCost.textContent = formatCurrency(Math.max(0, realmCost));
   requiredSavings.textContent = formatCurrency(savings);
-  requiredStandardBreakdown.textContent = `(${formatCurrency(
+  const standardTooltipMessage = `(${formatCurrency(
     providerRatePerMillion,
   )} provider ingest + ${formatCurrency(LEGACY_PIPELINE_OVERHEAD_PER_MILLION)} legacy tooling per million events)`;
+  setTooltipContent('standardBreakdown', standardTooltipMessage);
   const breakdownMessage = `Realm removes ${formatCurrency(
     LEGACY_PIPELINE_OVERHEAD_PER_MILLION,
   )} in legacy tooling, reduces provider ingest by ${(averageOptimization * 100).toFixed(
@@ -706,8 +852,11 @@ const update = () => {
   )}% to ${formatCurrency(optimizedRatePerMillion)} per million events and adds a ${formatCurrency(
     REALM_PLATFORM_FEE_PER_MILLION,
   )} platform fee per million.`;
-  requiredRealmBreakdown.textContent = breakdownMessage;
-  const eventSizeForSnapshot = unit === 'events' ? DEFAULT_EVENT_SIZE_KB : parsedEventSize;
+  const realmTooltipMessage = !optionalCalibrationNote && calibrationNote
+    ? `${breakdownMessage} ${calibrationNote}`
+    : breakdownMessage;
+  setTooltipContent('realmBreakdown', realmTooltipMessage);
+  const averageEventSizeForSnapshot = averageEventSizeUsed;
   const criblCost = estimateCriblCost(monthlyEvents, providerRatePerMillion);
 
   lastSnapshot = {
@@ -718,7 +867,7 @@ const update = () => {
     recommendation,
     dailyInput: parsedTraffic,
     dailyEvents,
-    eventSizeKb: eventSizeForSnapshot,
+    averageEventSizeKb: averageEventSizeForSnapshot,
     criblCost,
     criblEstimateUnlocked: hasUnlockedCriblEstimate,
     monthlyEvents,
@@ -739,25 +888,27 @@ const update = () => {
     optionalCalibrationNote.textContent = calibrationNote;
     optionalCalibrationNote.classList.toggle('field--hidden', calibrationNote === '');
   }
-  requiredSavingsPercent.textContent = savingsPercentage
+  const savingsTooltipMessage = savingsPercentage
     ? `${savingsPercentage >= 0 ? 'Savings of' : 'Increase of'} ${Math.abs(
         savingsPercentage,
       ).toFixed(1)}%`
     : 'No savings at current volume.';
-  if (!optionalCalibrationNote && calibrationNote) {
-    requiredRealmBreakdown.textContent = `${breakdownMessage} ${calibrationNote}`;
-  }
+  setTooltipContent('savingsPercent', savingsTooltipMessage);
 };
 
 const describeDailyVolume = (snapshot: ExportSnapshot): string => {
+  const averageSize = formatDecimal(snapshot.averageEventSizeKb, { maximumFractionDigits: 2 });
   if (snapshot.trafficUnit === 'events') {
-    return `${formatNumber(Math.round(snapshot.dailyInput))} events per day`;
+    const dailyGigabytes = (snapshot.dailyEvents * snapshot.averageEventSizeKb) / KB_PER_GIGABYTE;
+    const volumeDisplay = formatDecimal(dailyGigabytes, {
+      maximumFractionDigits: dailyGigabytes >= 10 ? 1 : 2,
+    });
+    return `${formatNumber(Math.round(snapshot.dailyInput))} events/day (~${volumeDisplay} GB at ${averageSize} KB per event)`;
   }
 
   const unitLabel = snapshot.trafficUnit === 'gigabytes' ? 'GB' : 'TB';
   const volume = formatDecimal(snapshot.dailyInput, { maximumFractionDigits: 2 });
-  const averageSize = formatDecimal(snapshot.eventSizeKb, { maximumFractionDigits: 2 });
-  return `${volume} ${unitLabel} per day | ${averageSize} KB avg. event size`;
+  return `${volume} ${unitLabel} per day (assumes ${averageSize} KB per event)`;
 };
 
 const buildScenarioLines = (snapshot: ExportSnapshot): string[] => {
@@ -801,16 +952,16 @@ const buildFinancialLines = (snapshot: ExportSnapshot): string[] => {
   const absoluteSavingsPercent = Math.abs(snapshot.savingsPercentage);
   const savingsLine =
     snapshot.savings >= 0
-      ? `Projected monthly savings: ${formatCurrency(snapshot.savings)} (${absoluteSavingsPercent.toFixed(
+      ? `Projected savings (monthly): ${formatCurrency(snapshot.savings)} (${absoluteSavingsPercent.toFixed(
           1,
         )}% vs standard)`
-      : `Projected monthly increase: ${formatCurrency(Math.abs(snapshot.savings))} (${absoluteSavingsPercent.toFixed(
+      : `Projected increase (monthly): ${formatCurrency(Math.abs(snapshot.savings))} (${absoluteSavingsPercent.toFixed(
           1,
         )}% vs standard)`;
 
   const lines = [
-    `Standard integration cost: ${formatCurrency(Math.max(0, snapshot.standardCost))}`,
-    `Realm optimized cost: ${formatCurrency(Math.max(0, snapshot.realmCost))}`,
+    `Current cost (SIEM): ${formatCurrency(Math.max(0, snapshot.standardCost))}`,
+    `With Realm: ${formatCurrency(Math.max(0, snapshot.realmCost))}`,
     savingsLine,
     `Legacy pipeline rate per million: ${formatCurrency(snapshot.legacyRatePerMillion)} (${formatCurrency(
       snapshot.providerRatePerMillion,
@@ -962,12 +1113,30 @@ const handleExportPdf = async () => {
 
 const initialize = () => {
   populateSelect(requiredSourceSelect, sources);
+  for (const option of Array.from(requiredSourceSelect.options)) {
+    option.selected = false;
+  }
+  requiredSourceSelect.selectedIndex = -1;
+  buildSourceSearchRecords();
+  applySourceSearchFilter(optionalSourceSearchInput?.value ?? '');
+
   populateSelect(requiredDestinationSelect, destinations);
+  const destinationPlaceholder = document.createElement('option');
+  destinationPlaceholder.value = '';
+  destinationPlaceholder.textContent = 'Select a destination';
+  destinationPlaceholder.disabled = true;
+  destinationPlaceholder.selected = true;
+  const [firstDestinationOption] = Array.from(requiredDestinationSelect.options);
+  if (firstDestinationOption) {
+    requiredDestinationSelect.insertBefore(destinationPlaceholder, firstDestinationOption);
+  } else {
+    requiredDestinationSelect.appendChild(destinationPlaceholder);
+  }
+  requiredDestinationSelect.value = '';
+
   populateOrganizationSizeSelect(requiredOrganizationSizeSelect);
   enableClickToToggleMultiSelect(requiredSourceSelect);
-  requiredSourceSelect.value = sources[0]?.id ?? '';
-  requiredDestinationSelect.value = destinations[0]?.id ?? '';
-  requiredTrafficUnit.value = 'events';
+  requiredTrafficUnit.value = 'gigabytes';
   requiredOrganizationSizeSelect.value =
     organizationSizeOptions[0]?.id ?? requiredOrganizationSizeSelect.value;
   applyRecommendation({ overrideTraffic: true, overrideEventSize: true });
@@ -975,8 +1144,9 @@ const initialize = () => {
 };
 
 requiredSourceSelect.addEventListener('change', () => {
-  applyRecommendation();
+  applyRecommendation({ overrideEventSize: !userEventSizeEdited });
   update();
+  applySourceSearchFilter(optionalSourceSearchInput?.value ?? '');
 });
 requiredDestinationSelect.addEventListener('change', update);
 requiredOrganizationSizeSelect.addEventListener('change', () => {
@@ -988,13 +1158,28 @@ requiredTrafficInput.addEventListener('input', () => {
   update();
 });
 requiredTrafficUnit.addEventListener('change', () => {
-  applyRecommendation({ overrideTraffic: !userTrafficEdited });
+  applyRecommendation({ overrideTraffic: !userTrafficEdited, overrideEventSize: !userEventSizeEdited });
   update();
 });
-requiredEventSizeInput.addEventListener('input', () => {
-  userEventSizeEdited = true;
-  update();
-});
+if (optionalSourceSearchInput) {
+  optionalSourceSearchInput.addEventListener('input', () => {
+    applySourceSearchFilter(optionalSourceSearchInput.value);
+  });
+  optionalSourceSearchInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && optionalSourceSearchInput.value !== '') {
+      optionalSourceSearchInput.value = '';
+      applySourceSearchFilter('');
+      optionalSourceSearchInput.blur();
+      event.preventDefault();
+    }
+  });
+}
+if (optionalEventSizeInput) {
+  optionalEventSizeInput.addEventListener('input', () => {
+    userEventSizeEdited = true;
+    update();
+  });
+}
 requiredExportPdfButton.addEventListener('click', () => {
   void handleExportPdf();
 });

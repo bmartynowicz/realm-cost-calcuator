@@ -1,3 +1,9 @@
+const DESTINATION_ALLOWLIST = new Set([
+    'splunk-es',
+    'sumo-logic-siem',
+    'microsoft-sentinel',
+    'crowdstrike-next-gen-siem',
+]);
 export const sources = [
     {
         id: 'aws-cloudtrail',
@@ -152,7 +158,7 @@ export const sources = [
         trafficCategory: 'identity',
     },
 ];
-export const destinations = [
+const allDestinations = [
     {
         id: 'splunk-es',
         label: 'Splunk Enterprise Security',
@@ -166,6 +172,13 @@ export const destinations = [
         description: 'Azure-native SIEM with pay-as-you-go log analytics ingestion.',
         costPerMillionEvents: 27,
         realmOptimization: 0.34,
+    },
+    {
+        id: 'crowdstrike-next-gen-siem',
+        label: 'CrowdStrike Falcon Next-Gen SIEM',
+        description: 'CrowdStrike-managed SIEM/XDR service built on Falcon LogScale with automated response.',
+        costPerMillionEvents: 28,
+        realmOptimization: 0.35,
     },
     {
         id: 'ibm-qradar',
@@ -294,3 +307,4 @@ export const destinations = [
         realmOptimization: 0.3,
     },
 ];
+export const destinations = allDestinations.filter((destination) => DESTINATION_ALLOWLIST.has(destination.id));
