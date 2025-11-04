@@ -1,12 +1,12 @@
-import { destinations, sources } from './data/catalog.js';
-import type { Endpoint } from './data/catalog.js';
+import { destinations, sources } from './data/catalog.ts';
+import type { Endpoint } from './data/catalog.ts';
 import {
   describeTrafficRecommendation,
   getTrafficRecommendation,
   organizationSizeOptions,
   type TrafficRecommendation,
   type OrganizationSizeKey,
-} from './data/traffic-profiles.js';
+} from './data/traffic-profiles.ts';
 
 type CalculatorState = {
   sources: Endpoint[];

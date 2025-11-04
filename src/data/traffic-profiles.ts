@@ -1,4 +1,4 @@
-import type { Endpoint, TrafficCategory } from './catalog.js';
+import type { Endpoint, TrafficCategory } from './catalog.ts';
 
 const KB_PER_GIGABYTE = 1_024 * 1_024;
 
