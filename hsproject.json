@@ -1,4 +1,5 @@
 {
   "name": "Realm Cost Calculator",
-  "srcDir": "src"
+  "srcDir": "src",
+  "platformVersion": "2025.2"
 }
