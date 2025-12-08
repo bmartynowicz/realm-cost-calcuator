@@ -1,0 +1,45 @@
+Product Name,Product Type,Rank (1 to 5),DS $$$,Eng $$$,Customer Allocated,Status (DS),Status (Eng),Potential PI,Ingestion Method,Output Format for Parsing,Link to SIEM docs,ticket
+AWS - CloudTrail ,CSP Logs,5,3,,"Freshworks, Simmons Foods, MLHS",Blocked,Done,-,Cloud Push/Pull - AWS S3,JSON,,
+AWS - ALB logs,CSP Logs,5,3,,,Blocked,Done,-,Cloud Push/Pull - AWS S4,JSON,,
+AWS - VPC Flow Logs,CSP Logs,5,3,,,Done,Done,-,Cloud Push/Pull - AWS S3,,,
+Crowdstrike Falcon ,Endpoint,5,2,,Advisor360,Done,Done,-,Cloud Push/Pull - AWS S3,JSON,,
+Palo Alto Networks - PanOS,Firewall,5,1,,"Main Line Health, Vensure",Done,Done,-,Collector - syslog,"Syslog, CEF",,
+Fortinet - Fortigate,Firewall,5,2,,Vensure,Done,Done,-,Collector - syslog,"Syslog, CEF",,
+Cisco Umbrella,Proxy & Web-Filtering,5,1,,Vensure,Blocked,Done,-,Cloud Pull - AWS S3,,,
+InfoBlox,Proxy & Web-Filtering,5,4,,"Main Line Health, Advisor 360",Blocked,Done,-,Collector - syslog,,,
+Zscaler - ZIA,Proxy & Web-Filtering,5,3,,Main Line Health,Done,Done,PI-9,"Cloud Push/Pull - AWS S3, Collector -syslog ","CEF, LEEF, or JSON",https://help.zscaler.com/zia/understanding-nanolog-streaming-service,https://app.shortcut.com/realm-security/epic/2452?group_by=none&hide_subtasks=false&ct_workflow=all&cf_workflow=500000005 
+CloudFlare - WAF,WAFs,5,3,,"Vensure, Main Line Health",Blocked,Done,PI-9,Cloud Push - AWS S3,JSON ,Enable Logpush to Amazon S3 · Cloudflare Logs docs,https://app.shortcut.com/realm-security/epic/2485?group_by=none&hide_subtasks=false&ct_workflow=all&cf_workflow=500000005
+Okta,IAM,2,3,,"Hubspot, Sony",,Done,,Cloud Pull - API via OAuth,,,
+Cisco Secure Firewall (f.k.a. Firepower),Firewall,4,4,,"Hubspot, Trinity, Dow, Simmons Food",,Done,PI-10,Collector ,Syslog,"Firepower Management Center Administration Guide, 7.1 - Event Analysis Using External Tools [Cisco Secure Firewall Management Center]",
+SonicWall - SonicOS/X,Firewall,2,3,,Vensure,,Done,PI-10,,,,
+Check Point Quantum,Firewall,4,,,Dow and Trinity,,Done,PI-11,,,SIEM / SOAR Integration,
+Windows Event Logs,Event Logs ,4,,,"Hubspot, Dow, Trinity, MLHS, Simmons Food",,Done,PI-11,Collector,XML or JSON,,
+Azure Monitor,CSP Logs,5,3,,"Advisor 360, Vensure",Blocked,in progress,PI-11,Azure Event Hub,,,https://app.shortcut.com/realm-security/epic/2254?group_by=none&hide_subtasks=false&ct_workflow=all&cf_workflow=500000005
+Microsoft - Defender,Endpoint,5,4,,"UMass Memorial, Simmons Food, New Balance",,in progress,PI-11,Azure Event Hub,,,https://app.shortcut.com/realm-security/epic/2254?group_by=none&hide_subtasks=false&ct_workflow=all&cf_workflow=500000005
+Microsoft - Entra ID,IAM,4,3,,UMass Memorial,,in progress,PI-11,Azure Event Hub,,,https://app.shortcut.com/realm-security/epic/2254?group_by=none&hide_subtasks=false&ct_workflow=all&cf_workflow=500000005
+Google Cloud - Audit Logs,CSP Logs,4,3,,Vensure,,,PI-11,Google Pub/Sub Data Transport,JSON,,https://app.shortcut.com/realm-security/epic/2700?group_by=none&hide_subtasks=false&ct_workflow=all&cf_workflow=500000005
+Akamai,WAFs and DNS,4,,,"Sony, Dow",,,PI-11,Pull  - Rest API  ,JSON,https://techdocs.akamai.com/siem-integration/docs/akamai-siem-integration-for-splunk-and-cef-syslog,
+Wiz ,zCloud Security (Partner),4,,,"Vensure, MLHS",,,PI-12,WIN API - GraphQL and Push Webhook,,https://win.wiz.io/reference/issues-query,https://app.shortcut.com/realm-security/epic/2575?group_by=none&hide_subtasks=false&ct_workflow=all&cf_workflow=500000005
+Radware WAF,WAF DDOS,4,,,Mainline Health,,,PI-12,,,,
+Abnormal Email,Email,3,,,New Balance,,,PI-12,,,,
+Fortinet - ZTNA,Web-Filtering,3,,,Vensure,,,PI-12,,,,
+AWS - WAF,WAFs,4,3,,Lincoln Financial ,,,PI-12,Cloud Push/Pull - AWS S3,,,
+SentinelOne,Endpoint,4,4,,,,,PI-13,cloud syslog,"CEF, CEF2",SentinelOne Mgmt API Source | Sumo Logic Docs,https://app.shortcut.com/realm-security/epic/2701?group_by=none&hide_subtasks=false&ct_workflow=all&cf_workflow=500000005
+Cisco ASA Firewall,Firewall,3,,,Dow,,,PI-13,,,,
+Zscaler ZPA,Web-Filtering,2,,,Dow,,,PI-13,,,,
+Palo Alto Networks - Threat Prevention,IDS/IPS,4,1,,,In progress,,,,,,
+Fortinet - FortiIPS,IDS/IPS,4,2,,,In progress,,,,,,
+Cisco Firepower IPS,IDS/IPS,2,4,,,,,,Managed the same as Cisco Secure Firewall ,,,
+Ping Identity,IAM,2,,,,,,,,,,
+CyberArk - Privileged Access,IAM,2,,,,,,,,,,
+ForgeRock (Ping Identity),IAM,2,,,,,,,,,,
+Trend Micro - TippingPoint,IDS/IPS,2,,,,,,,,,,
+F5 - Big-IP ASM,WAFs,2,3,,,,,,,,,
+Palo Alto - Cortex XDR,Endpoint,2,1,,Freshworks,,,,,JSON ,,https://app.shortcut.com/realm-security/epic/2705?group_by=none&hide_subtasks=false&ct_workflow=all&cf_workflow=500000005
+Microsoft Office 365 ,Workplace Tools,2,,,UMass Memorial,,,,,,,
+Symantec - Carbon Black ,Endpoint,1,,,,,,,,,,
+Juniper Networks - SRX,Firewall,1,,,,,,,Collector - syslog over TLS ,syslog,Configure Syslog over TLS | Junos OS | Juniper Networks,
+Symnatec - ProxySG,Proxy & Web-Filtering,1,,,,,,,Collector - syslog via TCP,csv or CEF,Sending Access Logs to a Syslog server,
+Forepoint - Web Security,Proxy & Web-Filtering,1,,,,,,,Cloud Push/Pull - AWS S3 or Forcepoint Storage - scheduled logfile downloads,csv,File format definition for SIEM logging,
+Darktrace,,1,,,Planned Parenthood ,,,,,,,
+Mimecast Email ,Email,,,,New Balance,,,,,,,

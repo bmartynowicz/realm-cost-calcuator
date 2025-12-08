@@ -8,10 +8,10 @@ import {
   type OrganizationSizeKey,
 } from './data/traffic-profiles.ts';
 
-type CalculatorState = {
+type CalculationInput = {
   sources: SourceEndpoint[];
   destination: DestinationEndpoint;
-  dailyTraffic: number;
+  dailyTerabytes: number;
 };
 
 type TrafficUnit = 'events' | 'gigabytes' | 'terabytes';
@@ -23,15 +23,20 @@ type CombinationOverride = {
   note?: string;
 };
 
-const REALM_PLATFORM_FEE_PER_MILLION = 7.5;
+const SIEM_COST_PER_TB = 500_000;
+const REALM_COST_PER_TB = 70_000;
 const KB_PER_GIGABYTE = 1_024 * 1_024;
 const KB_PER_TERABYTE = KB_PER_GIGABYTE * 1_024;
 const DEFAULT_EVENT_SIZE_KB = 1;
 const MAX_REALM_OPTIMIZATION = 0.75;
-// Average third-party tooling + operations overhead Realm removes from legacy pipelines.
-const LEGACY_PIPELINE_OVERHEAD_PER_MILLION = 12;
+
+const FIREWALL_REDUCTION = 0.7;
+const NETWORK_REDUCTION = 0.6;
+const ENDPOINT_REDUCTION = 0.5;
+const GENERIC_REDUCTION = 0.5;
+const FIREWALL_KEYWORDS = ['firewall', 'waf', 'ips', 'ids', 'ngfw', 'fortigate', 'asa', 'palo alto'];
+
 const CRIBL_MARKUP_RATE = 0.18;
-const CRIBL_PLATFORM_FEE_PER_MILLION = 12;
 const CRIBL_REVEAL_LABEL = 'Enter work email to unlock';
 const CRIBL_UNLOCKED_LABEL = 'Cribl estimate unlocked';
 const WORK_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
@@ -204,6 +209,27 @@ type CombinedSourceMetrics = {
   realmOptimization: number;
 };
 
+const getFixedReduction = (endpoint: SourceEndpoint): number => {
+  const normalizedLabel = `${endpoint.label} ${endpoint.id}`.toLowerCase();
+  const isFirewall =
+    endpoint.trafficCategory === 'network-security' &&
+    FIREWALL_KEYWORDS.some((keyword) => normalizedLabel.includes(keyword));
+
+  if (isFirewall) {
+    return FIREWALL_REDUCTION;
+  }
+
+  if (endpoint.trafficCategory === 'network-security') {
+    return NETWORK_REDUCTION;
+  }
+
+  if (endpoint.trafficCategory === 'endpoint-edr') {
+    return ENDPOINT_REDUCTION;
+  }
+
+  return Math.max(GENERIC_REDUCTION, Math.min(MAX_REALM_OPTIMIZATION, endpoint.realmOptimization));
+};
+
 const summarizeSources = (selectedSources: SourceEndpoint[]): CombinedSourceMetrics => {
   if (selectedSources.length === 0) {
     throw new Error('At least one source must be provided for calculation.');
@@ -212,13 +238,13 @@ const summarizeSources = (selectedSources: SourceEndpoint[]): CombinedSourceMetr
   if (selectedSources.length === 1) {
     const [singleSource] = selectedSources;
     return {
-      realmOptimization: singleSource.realmOptimization,
+      realmOptimization: getFixedReduction(singleSource),
     };
   }
 
   const aggregates = selectedSources.reduce(
     (accumulator, source) => {
-      accumulator.realmOptimization += source.realmOptimization;
+      accumulator.realmOptimization += getFixedReduction(source);
       return accumulator;
     },
     { realmOptimization: 0 },
@@ -229,43 +255,49 @@ const summarizeSources = (selectedSources: SourceEndpoint[]): CombinedSourceMetr
   };
 };
 
-const calculate = ({ sources: selectedSources, destination, dailyTraffic }: CalculatorState) => {
+const calculate = ({
+  sources: selectedSources,
+  destination,
+  dailyTerabytes,
+}: CalculationInput) => {
   if (selectedSources.length === 0) {
     throw new Error('At least one source must be selected.');
   }
 
-  const millions = dailyTraffic / 1_000_000;
-
   const combinedSource = summarizeSources(selectedSources);
-
-  const providerRatePerMillion = destination.costPerMillionEvents;
-  const legacyRatePerMillion = providerRatePerMillion + LEGACY_PIPELINE_OVERHEAD_PER_MILLION;
-  const standardCost = millions * legacyRatePerMillion;
-
   const overrideKey =
     selectedSources.length === 1 ? `${selectedSources[0].id}::${destination.id}` : null;
   const override = overrideKey ? combinationOverrides[overrideKey] : undefined;
   const averageOptimization =
     override?.averageOptimization ??
-    Math.min(
-      MAX_REALM_OPTIMIZATION,
-      (combinedSource.realmOptimization + destination.realmOptimization) / 2,
-    );
+    Math.min(MAX_REALM_OPTIMIZATION, combinedSource.realmOptimization);
 
-  const optimizedRatePerMillion = providerRatePerMillion * (1 - averageOptimization);
-  const realmCost = millions * (optimizedRatePerMillion + REALM_PLATFORM_FEE_PER_MILLION);
+  const appliedOptimization = Math.min(MAX_REALM_OPTIMIZATION, Math.max(0, averageOptimization));
+  const baselineTerabytes = Math.max(0, dailyTerabytes);
+  const optimizedTerabytes = baselineTerabytes * (1 - appliedOptimization);
+  const dataReductionTb = Math.max(0, baselineTerabytes - optimizedTerabytes);
+  const dataReductionPercentage =
+    baselineTerabytes > 0 ? dataReductionTb / baselineTerabytes : 0;
+
+  const standardCost = baselineTerabytes * SIEM_COST_PER_TB;
+  const realmCost = optimizedTerabytes * REALM_COST_PER_TB;
   const savings = standardCost - realmCost;
   const savingsPercentage = standardCost > 0 ? (savings / standardCost) * 100 : 0;
+  const roiMultiple = realmCost > 0 ? savings / realmCost : 0;
 
   return {
     standardCost,
     realmCost,
     savings,
     savingsPercentage,
-    providerRatePerMillion,
-    legacyRatePerMillion,
-    optimizedRatePerMillion,
-    averageOptimization,
+    roiMultiple,
+    baselineTerabytes,
+    optimizedTerabytes,
+    dataReductionTb,
+    dataReductionPercentage,
+    realmRatePerTb: REALM_COST_PER_TB,
+    baselineRatePerTb: SIEM_COST_PER_TB,
+    averageOptimization: appliedOptimization,
     calibrationNote: override?.note ?? '',
   };
 };
@@ -280,6 +312,7 @@ type ExportSnapshot = CalculationResult & {
   recommendation: TrafficRecommendation;
   dailyInput: number;
   dailyEvents: number;
+  dailyTerabytes: number;
   averageEventSizeKb: number;
   criblCost: number;
   criblEstimateUnlocked: boolean;
@@ -305,6 +338,8 @@ const trafficError = document.querySelector<HTMLSpanElement>('#trafficError');
 const standardCostEl = document.querySelector<HTMLElement>('#standardCost');
 const realmCostEl = document.querySelector<HTMLElement>('#realmCost');
 const savingsEl = document.querySelector<HTMLElement>('#savings');
+const roiMultipleEl = document.querySelector<HTMLElement>('#roiMultiple');
+const dataReductionEl = document.querySelector<HTMLElement>('#dataReduction');
 const calibrationNoteEl = document.querySelector<HTMLElement>('#calibrationNote');
 const trafficRecommendationEl = document.querySelector<HTMLParagraphElement>('#trafficRecommendation');
 const criblCostEl = ENABLE_CRIBL_COMPARISON
@@ -355,6 +390,8 @@ const requiredTrafficError = assertElement(trafficError, 'Traffic error');
 const requiredStandardCost = assertElement(standardCostEl, 'Current cost');
 const requiredRealmCost = assertElement(realmCostEl, 'Realm cost');
 const requiredSavings = assertElement(savingsEl, 'Savings');
+const requiredRoiMultiple = assertElement(roiMultipleEl, 'ROI multiple');
+const requiredDataReduction = assertElement(dataReductionEl, 'Data reduction');
 const requiredTrafficRecommendation = assertElement(
   trafficRecommendationEl,
   'Traffic recommendation',
@@ -590,15 +627,13 @@ const updateCriblDisplay = (formattedCost: string) => {
   }
 };
 
-const estimateCriblCost = (eventCount: number, providerRatePerMillion: number): number => {
-  if (eventCount <= 0) {
+const estimateCriblCost = (dailyTerabytes: number): number => {
+  if (dailyTerabytes <= 0) {
     return 0;
   }
 
-  const millions = eventCount / 1_000_000;
-  const baseRate = providerRatePerMillion + CRIBL_PLATFORM_FEE_PER_MILLION;
-  const adjustedRate = baseRate * (1 + CRIBL_MARKUP_RATE);
-  return millions * adjustedRate;
+  const adjustedRatePerTb = REALM_COST_PER_TB * (1 + CRIBL_MARKUP_RATE);
+  return dailyTerabytes * adjustedRatePerTb;
 };
 
 const isConsumerDomain = (domain: string): boolean => CONSUMER_EMAIL_DOMAINS.has(domain);
@@ -676,13 +711,13 @@ const getEndpoint = <T extends SelectableEndpoint>(list: T[], id: string): T => 
 
 const describeSourceReduction = (endpoint: SourceEndpoint): string => {
   const percentage = (endpoint.realmOptimization * 100).toFixed(0);
-  return `${endpoint.description} • ~${percentage}% typical Realm reduction`;
+  return `${endpoint.description} - ~${percentage}% Realm reduction assumption`;
 };
 
 const renderDestinationSummary = (element: HTMLElement, endpoint: DestinationEndpoint) => {
-  element.textContent = `${endpoint.description} - ${formatCurrency(
-    endpoint.costPerMillionEvents,
-  )} per million events`;
+  element.textContent = `${endpoint.description} - modeled at ${formatCurrency(
+    SIEM_COST_PER_TB,
+  )} per TB of raw ingest`;
 };
 
 const enableClickToToggleMultiSelect = (select: HTMLSelectElement) => {
@@ -735,7 +770,7 @@ const renderSourcesSummary = (element: HTMLElement, selectedSources: SourceEndpo
 
   const combined = summarizeSources(selectedSources);
   const averageReduction = (combined.realmOptimization * 100).toFixed(0);
-  element.textContent = `${selectedSources.length} sources selected • Avg Realm reduction ~${averageReduction}%`;
+  element.textContent = `${selectedSources.length} sources selected - Avg Realm reduction ~${averageReduction}%`;
   element.title = selectedSources.map((endpoint) => endpoint.label).join(', ');
 };
 
@@ -745,9 +780,13 @@ const resetOutputs = () => {
   requiredStandardCost.textContent = '--';
   requiredRealmCost.textContent = '--';
   requiredSavings.textContent = '--';
+  requiredRoiMultiple.textContent = '--';
+  requiredDataReduction.textContent = '--';
   setTooltipContent('standardBreakdown', '');
   setTooltipContent('realmBreakdown', '');
   setTooltipContent('savingsPercent', '');
+  setTooltipContent('roiBreakdown', '');
+  setTooltipContent('reductionBreakdown', '');
   updateCriblDisplay('--');
   clearCriblError();
   if (!hasUnlockedCriblEstimate) {
@@ -900,43 +939,79 @@ const update = () => {
     const kbPerUnit = unit === 'gigabytes' ? KB_PER_GIGABYTE : KB_PER_TERABYTE;
     dailyEvents = averageEventSizeUsed > 0 ? (parsedTraffic * kbPerUnit) / averageEventSizeUsed : 0;
   }
+  const dailyGigabytes = (dailyEvents * averageEventSizeUsed) / KB_PER_GIGABYTE;
+  const dailyTerabytes = dailyGigabytes / 1_024;
 
   const {
     standardCost,
     realmCost,
     savings,
     savingsPercentage,
-    providerRatePerMillion,
-    legacyRatePerMillion,
-    optimizedRatePerMillion,
+    roiMultiple,
+    baselineTerabytes,
+    optimizedTerabytes,
+    dataReductionTb,
+    dataReductionPercentage,
+    baselineRatePerTb,
+    realmRatePerTb,
     averageOptimization,
     calibrationNote,
   } = calculate({
     sources: selectedSources,
     destination,
-    dailyTraffic: dailyEvents,
+    dailyTerabytes,
   });
 
   requiredStandardCost.textContent = formatCurrency(Math.max(0, standardCost));
   requiredRealmCost.textContent = formatCurrency(Math.max(0, realmCost));
   requiredSavings.textContent = formatCurrency(savings);
-  const standardTooltipMessage = `(${formatCurrency(
-    providerRatePerMillion,
-  )} destination ingest + ${formatCurrency(LEGACY_PIPELINE_OVERHEAD_PER_MILLION)} legacy tooling per million events)`;
+  requiredRoiMultiple.textContent =
+    roiMultiple > 0
+      ? `${formatDecimal(roiMultiple, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}x`
+      : '--';
+  const reductionPercentDisplay = dataReductionPercentage * 100;
+  requiredDataReduction.textContent =
+    baselineTerabytes > 0
+      ? `${formatDecimal(dataReductionTb, { maximumFractionDigits: 3 })} TB (${formatDecimal(
+          reductionPercentDisplay,
+          { maximumFractionDigits: 1, minimumFractionDigits: 1 },
+        )}% less)`
+      : '--';
+  const standardTooltipMessage = `${destination.label} modeled at ${formatCurrency(
+    baselineRatePerTb,
+  )} per TB of raw ingest.`;
   setTooltipContent('standardBreakdown', standardTooltipMessage);
-  const breakdownMessage = `Realm removes ${formatCurrency(
-    LEGACY_PIPELINE_OVERHEAD_PER_MILLION,
-  )} in legacy tooling, reduces destination ingest by ${(averageOptimization * 100).toFixed(
-    0,
-  )}% to ${formatCurrency(optimizedRatePerMillion)} per million events and adds a ${formatCurrency(
-    REALM_PLATFORM_FEE_PER_MILLION,
-  )} platform fee per million.`;
-  const realmTooltipMessage = !optionalCalibrationNote && calibrationNote
-    ? `${breakdownMessage} ${calibrationNote}`
-    : breakdownMessage;
+  const realmTooltipMessageParts = [
+    `Realm trims ${(averageOptimization * 100).toFixed(0)}% of daily volume to ${formatDecimal(
+      optimizedTerabytes,
+      { maximumFractionDigits: 3 },
+    )} TB.`,
+    `Realm Focus included at ${formatCurrency(realmRatePerTb)} per TB.`,
+  ];
+  const realmTooltipMessage =
+    !optionalCalibrationNote && calibrationNote
+      ? `${realmTooltipMessageParts.join(' ')} ${calibrationNote}`
+      : realmTooltipMessageParts.join(' ');
   setTooltipContent('realmBreakdown', realmTooltipMessage);
+  const reductionTooltipMessage =
+    baselineTerabytes > 0
+      ? `${formatDecimal(baselineTerabytes, {
+          maximumFractionDigits: 3,
+        })} TB/day in raw telemetry reduced by ${formatDecimal(reductionPercentDisplay, {
+          maximumFractionDigits: 1,
+          minimumFractionDigits: 1,
+        })}% to ${formatDecimal(optimizedTerabytes, { maximumFractionDigits: 3 })} TB.`
+      : '';
+  setTooltipContent('reductionBreakdown', reductionTooltipMessage);
+  const roiTooltipMessage =
+    roiMultiple > 0
+      ? `ROI = savings (${formatCurrency(savings)}) divided by Realm cost (${formatCurrency(
+          realmCost,
+        )}).`
+      : 'ROI becomes available after entering a valid volume.';
+  setTooltipContent('roiBreakdown', roiTooltipMessage);
   const averageEventSizeForSnapshot = averageEventSizeUsed;
-  const criblCost = estimateCriblCost(dailyEvents, providerRatePerMillion);
+  const criblCost = estimateCriblCost(dailyTerabytes);
 
   lastSnapshot = {
     sources: selectedSources,
@@ -946,6 +1021,7 @@ const update = () => {
     recommendation,
     dailyInput: parsedTraffic,
     dailyEvents,
+    dailyTerabytes,
     averageEventSizeKb: averageEventSizeForSnapshot,
     criblCost,
     criblEstimateUnlocked: hasUnlockedCriblEstimate,
@@ -953,9 +1029,13 @@ const update = () => {
     realmCost,
     savings,
     savingsPercentage,
-    providerRatePerMillion,
-    legacyRatePerMillion,
-    optimizedRatePerMillion,
+    roiMultiple,
+    baselineTerabytes,
+    optimizedTerabytes,
+    dataReductionTb,
+    dataReductionPercentage,
+    baselineRatePerTb,
+    realmRatePerTb,
     averageOptimization,
     calibrationNote,
   };
@@ -969,7 +1049,7 @@ const update = () => {
   const savingsTooltipMessage = savingsPercentage
     ? `${savingsPercentage >= 0 ? 'Savings of' : 'Increase of'} ${Math.abs(
         savingsPercentage,
-      ).toFixed(1)}%`
+      ).toFixed(1)}% vs traditional SIEM pricing at ${formatCurrency(baselineRatePerTb)} per TB.`
     : 'No savings at current volume.';
   setTooltipContent('savingsPercent', savingsTooltipMessage);
 };
@@ -1023,6 +1103,8 @@ const buildScenarioLines = (snapshot: ExportSnapshot): string[] => {
   lines.push(
     `Daily volume: ${describeDailyVolume(snapshot)}`,
     `Converted daily events: ${formatNumber(Math.round(snapshot.dailyEvents))}`,
+    `Traditional SIEM volume: ${formatDecimal(snapshot.baselineTerabytes, { maximumFractionDigits: 3 })} TB/day`,
+    `Realm-managed volume: ${formatDecimal(snapshot.optimizedTerabytes, { maximumFractionDigits: 3 })} TB/day after ${(snapshot.dataReductionPercentage * 100).toFixed(1)}% reduction.`,
   );
 
   const baselineSummary = describeTrafficRecommendation(snapshot.recommendation);
@@ -1037,22 +1119,32 @@ const buildFinancialLines = (snapshot: ExportSnapshot): string[] => {
     snapshot.savings >= 0
       ? `Projected savings (daily): ${formatCurrency(snapshot.savings)} (${absoluteSavingsPercent.toFixed(
           1,
-        )}% vs standard)`
+        )}% vs traditional)`
       : `Projected increase (daily): ${formatCurrency(Math.abs(snapshot.savings))} (${absoluteSavingsPercent.toFixed(
           1,
-        )}% vs standard)`;
+        )}% vs traditional)`;
+  const roiLine =
+    snapshot.roiMultiple > 0
+      ? `ROI vs Realm: ${formatDecimal(snapshot.roiMultiple, {
+          maximumFractionDigits: 1,
+          minimumFractionDigits: 1,
+        })}x (savings ÷ Realm cost)`
+      : 'ROI unavailable without a Realm cost.';
 
   const lines = [
-    `Current cost: ${formatCurrency(Math.max(0, snapshot.standardCost))}`,
-    `With Realm: ${formatCurrency(Math.max(0, snapshot.realmCost))}`,
+    `Traditional SIEM (${formatCurrency(snapshot.baselineRatePerTb)} per TB): ${formatCurrency(
+      Math.max(0, snapshot.standardCost),
+    )}`,
+    `Realm total (${formatCurrency(snapshot.realmRatePerTb)} per TB, Realm Focus included): ${formatCurrency(
+      Math.max(0, snapshot.realmCost),
+    )}`,
     savingsLine,
-    `Legacy pipeline rate per million: ${formatCurrency(snapshot.legacyRatePerMillion)} (${formatCurrency(
-      snapshot.providerRatePerMillion,
-    )} destination ingest + ${formatCurrency(LEGACY_PIPELINE_OVERHEAD_PER_MILLION)} tooling)`,
-    `Blended rate per million (Realm): ${formatCurrency(snapshot.optimizedRatePerMillion)} + ${formatCurrency(
-      REALM_PLATFORM_FEE_PER_MILLION,
-    )} platform fee`,
+    `Data reduced per day: ${formatDecimal(snapshot.dataReductionTb, { maximumFractionDigits: 3 })} TB (${formatDecimal(
+      snapshot.dataReductionPercentage * 100,
+      { maximumFractionDigits: 1, minimumFractionDigits: 1 },
+    )}% less)`,
     `Average optimization applied: ${(snapshot.averageOptimization * 100).toFixed(1)}%`,
+    roiLine,
   ];
 
   const criblLine = snapshot.criblEstimateUnlocked
@@ -1389,3 +1481,9 @@ if (criblUi) {
 
 setupFaqAccordion();
 initialize();
+
+
+
+
+
+

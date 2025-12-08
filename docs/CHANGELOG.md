@@ -2,8 +2,11 @@
 
 ## 2025-12-08
 
+- Synced the source catalog to the full "Data Source - Priority" list (44 sources) and documented the sheet snapshot in `docs/V2/data-source-priority.md`. The UI copy now reflects the expanded catalog and remains covered by automated QA.
 - Removed the "Monthly events" framing from the calculator documentation so every reference now speaks in terms of daily traffic, matching the code updates in `index.html` and `src/main.ts`.
 - Clarified the backlog export to mark the "Remove Monthly Events" request as satisfied and to note that the experience now surfaces daily savings.
+- Shifted the cost model to per-terabyte pricing ($500k/TB traditional SIEM vs $70k/TB Realm Focus), added ROI and data-reduction outputs to the UI, and covered them with Playwright assertions.
+- Added an in-product pricing note to spell out Realm’s $70k/TB all-in cost versus the $500k/TB SIEM benchmark for transparency (Shortcut 4066).
 
 ## 2025-11-03
 

@@ -27,7 +27,7 @@
           <p class="hero__eyebrow">Realm Cost Explorer</p>
           <h1 class="hero__title">Understand your current security log volume spend</h1>
           <p class="hero__subtitle">
-            Choose from 19 security data sources and the top 20 SIEM destinations,
+            Choose from 44 security data sources and the top 20 SIEM destinations,
             enter the average daily traffic you expect to synchronize, and instantly
             compare log volume costs against Realm's optimized pricing.
           </p>
@@ -146,13 +146,13 @@
           <div class="panel__header">
             <h2 class="panel__title" id="results-heading">Cost projection</h2>
             <p class="panel__subtitle">
-              Instantly compare expected log volume costs with and without Realm's
-              optimization.
+              Modeled at $500k per TB for traditional SIEM ingest versus $70k per TB with Realm
+              Focus included.
             </p>
           </div>
           <dl class="metrics">
             <div class="metrics__item metrics__item--savings">
-              <dt class="metrics__label metrics__label--savings">Projected daily savings</dt>
+              <dt class="metrics__label metrics__label--savings">Projected savings vs traditional SIEM</dt>
               <dd class="metrics__value metrics__value--with-tooltip metrics__value--savings">
                 <span id="savings">--</span>
                 <button
@@ -172,7 +172,7 @@
               </dd>
             </div>
             <div class="metrics__item">
-              <dt class="metrics__label">- Current Cost</dt>
+              <dt class="metrics__label">Traditional SIEM @ $500k per TB</dt>
               <dd class="metrics__value metrics__value--with-tooltip">
                 <span id="standardCost">--</span>
                 <button
@@ -192,7 +192,7 @@
               </dd>
             </div>
             <div class="metrics__item">
-              <dt class="metrics__label">With Realm</dt>
+              <dt class="metrics__label">Realm total @ $70k per TB (Realm Focus included)</dt>
               <dd class="metrics__value metrics__value--highlight metrics__value--with-tooltip">
                 <span id="realmCost">--</span>
                 <button
@@ -212,7 +212,51 @@
               </dd>
               <dd class="metrics__description field--hidden" id="calibrationNote"></dd>
             </div>
+            <div class="metrics__item">
+              <dt class="metrics__label">ROI vs Realm</dt>
+              <dd class="metrics__value metrics__value--with-tooltip">
+                <span id="roiMultiple">--</span>
+                <button
+                  type="button"
+                  class="metrics__tooltip-trigger"
+                  data-role="tooltip-trigger"
+                  data-tooltip-target="roiBreakdown"
+                  data-tooltip-label="ROI breakdown"
+                  aria-expanded="false"
+                  aria-describedby="roiBreakdown"
+                  hidden
+                >
+                  <span aria-hidden="true" class="metrics__tooltip-icon">i</span>
+                  <span class="sr-only">Show ROI breakdown</span>
+                </button>
+                <span class="sr-only" id="roiBreakdown" data-role="tooltip-text"></span>
+              </dd>
+            </div>
+            <div class="metrics__item">
+              <dt class="metrics__label">Data reduced per day</dt>
+              <dd class="metrics__value metrics__value--with-tooltip">
+                <span id="dataReduction">--</span>
+                <button
+                  type="button"
+                  class="metrics__tooltip-trigger"
+                  data-role="tooltip-trigger"
+                  data-tooltip-target="reductionBreakdown"
+                  data-tooltip-label="Reduction breakdown"
+                  aria-expanded="false"
+                  aria-describedby="reductionBreakdown"
+                  hidden
+                >
+                  <span aria-hidden="true" class="metrics__tooltip-icon">i</span>
+                  <span class="sr-only">Show data reduction breakdown</span>
+                </button>
+                <span class="sr-only" id="reductionBreakdown" data-role="tooltip-text"></span>
+              </dd>
+            </div>
           </dl>
+          <p class="metrics__note">
+            Realm pricing shown here is all-in: $70k per TB of optimized volume with Realm Focus included.
+            The traditional benchmark uses $500k per TB of raw SIEM ingest so savings and ROI stay transparent.
+          </p>
           <div class="metrics__actions" aria-labelledby="results-heading">
             <div class="metrics__item metrics__item--action metrics__item--export">
               <h3 class="metrics__actions-title">Share this scenario</h3>

@@ -1,7 +1,7 @@
 # Realm Cost Calculator
 
 An interactive, client-side tool for estimating daily integration costs and projected
-savings when routing data through Realm. The calculator lets you choose from 19
+savings when routing data through Realm. The calculator lets you choose from 44
 enterprise data sources spanning network, identity, infrastructure, and endpoint
 telemetry plus the top 20 SIEM destinations, enter expected daily traffic, and
 immediately compare traditional integration spend versus Realm's optimized
@@ -11,6 +11,7 @@ approach.
 
 - Daily volume tiers auto-populate realistic traffic baselines using category-specific event sizes.
   See [`docs/traffic-baselines.md`](docs/traffic-baselines.md) for the research notes behind each tier.
+- Per-terabyte pricing model makes costs explicit ($500k/TB legacy SIEM vs $70k/TB Realm Focus), with ROI and data-reduction outputs in the results panel.
 - Executive summary PDF export packages the current scenario for finance or procurement stakeholders.
 - Competitive benchmarking against Cribl is temporarily hidden while we prep the V2 experience.
 - Updated data catalog and supporting research samples live under [`research/`](research/), making it easy to
@@ -103,11 +104,11 @@ Static assets placed in `public/` are copied as-is to the output directory durin
 
 ## Customizing the model
 
-The pricing assumptions live in `src/data/catalog.ts`, which exports the 19-entry
-`sources` array and top-20 `destinations` array. Adjust the per-million event pricing or
-optimization percentages to fit your data contracts, and tweak the
-`REALM_PLATFORM_FEE_PER_MILLION` constant in `src/main.ts` (and the mirrored values in
-`src/data/cost-model.ts`) to reflect your Realm platform agreement.
+The pricing assumptions live in `src/data/catalog.ts`, which exports the 44-entry
+`sources` array and top-20 `destinations` array. Adjust the per-terabyte pricing and
+optimization percentages to fit your data contracts, and tweak the Realm TB rate in
+`src/main.ts` (and the mirrored values in `src/data/cost-model.ts`) to reflect your Realm
+platform agreement.
 
 Organization size presets and traffic baselines are defined in
 `src/data/traffic-profiles.ts` and documented in

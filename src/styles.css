@@ -466,6 +466,13 @@ body {
   gap: 1.25rem;
 }
 
+.metrics__note {
+  margin: 1rem 0 0;
+  font-size: 0.9rem;
+  color: rgba(248, 250, 252, 0.82);
+  line-height: 1.5;
+}
+
 .metrics__item--action {
   display: grid;
   gap: 0.75rem;

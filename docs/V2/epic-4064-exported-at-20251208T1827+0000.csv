@@ -1,0 +1,188 @@
+id,name,type,requester,owners,description,is_completed,created_at,started_at,updated_at,moved_at,completed_at,estimate,external_ticket_count,external_tickets,is_blocked,is_a_blocker,due_date,labels,epic_labels,tasks,state,epic_id,epic,project_id,project,iteration_id,iteration,utc_offset,is_archived,team_id,team,epic_state,epic_is_archived,epic_created_at,epic_started_at,epic_due_date,objective_id,objective,objective_state,objective_created_at,objective_started_at,objective_due_date,objective_categories,epic_planned_start_date,workflow,workflow_id,priority,severity,product_area,skill_set,technical_area,custom_fields,parent_story_id
+4076,Enabling the sales reps to do deeper discovery questions,feature,brian@realm.security,,"Requestor - Pete
+
+More about what we can do.  Can we get a list of the integrations for the next 3 months.  Devon - We should take the whole list down to 45.  
+
+There will be some we don't have.  If we hear them we just make notes.
+
+Feedback from Codex:
+- 4076 “deeper discovery + 45-integration roadmap” (docs/V2/epic-4064-exported-at-20251208T1640+0000.csv (line 2)): the app still just exposes a static multi-select of 19 sources with no notion of an upcoming integration list nor any way to capture “make notes when we don’t have it” feedback (index.html (line 132), src/data/catalog.ts (line 24)). Nothing in the repo helps reps probe discovery questions beyond picking a source.
+
+Sources confirmed from Devon's spreadsheet:
+| |
+| --- |
+| Product Name |
+| AWS - CloudTrail  |
+| AWS - ALB logs |
+| AWS - VPC Flow Logs |
+| Crowdstrike Falcon  |
+| Palo Alto Networks - PanOS |
+| Fortinet - Fortigate |
+| Cisco Umbrella |
+| InfoBlox |
+| Zscaler - ZIA |
+| CloudFlare - WAF |
+| Okta |
+| Cisco Secure Firewall (f.k.a. Firepower) |
+| SonicWall - SonicOS/X |
+| Check Point Quantum |
+| Windows Event Logs |
+| Azure Monitor |
+| Microsoft - Defender |
+| Microsoft - Entra ID |
+| Google Cloud - Audit Logs |
+| Akamai |
+| [Wiz](http://wiz.io/)  |
+| Radware WAF |
+| Abnormal Email |
+| Fortinet - ZTNA |
+| AWS - WAF |
+| SentinelOne |
+| Cisco ASA Firewall |
+| Zscaler ZPA |
+| Palo Alto Networks - Threat Prevention |
+| Fortinet - FortiIPS |
+| Cisco Firepower IPS |
+| Ping Identity |
+| CyberArk - Privileged Access |
+| ForgeRock (Ping Identity) |
+| Trend Micro - TippingPoint |
+| F5 - Big-IP ASM |
+| Palo Alto - Cortex XDR |
+| Microsoft Office 365  |
+| Symantec - Carbon Black  |
+| Juniper Networks - SRX |
+| Symnatec - ProxySG |
+| Forepoint - Web Security |
+| Darktrace |
+| Mimecast Email  |
+
+Destinations as confirmed by Devon's spreadsheet:
+| |
+| --- |
+| Product Name |
+| Splunk |
+| Sumo Logic |
+| AWS S3  |
+| GCS Storage |
+| Crwd NG SIEM |
+| MS Sentinel |
+| Palo Alto - Cortex XSIAM |
+| Azure Blob  |
+| Hydrolix |
+| Datadog |
+| Exabeam  |
+| Google Chronicle |
+| Databricks |
+| Snowflake  |
+| Panther SIEM  |
+| SentinelOne Singularity |
+| Elastic SIEM  |
+| Hunters |",false,2025/12/05 11:24:30,,2025/12/08 11:52:52,2025/12/05 11:24:30,,,0,,false,false,,,,,Backlog,4064,Realm Cost Calculator V2,,,,,-05:00,false,67f3f34d-e8c7-46dd-93de-0ea822350c17,Sales Enablement,in progress,false,2025/12/05 10:48:49,2025/12/08 12:32:04,,,,,,,,,,Standard,500000005,,,,,,,
+4067,"Remove the concept of ""monthly events""",feature,brian@realm.security,brian@realm.security,"Requestor - Devon
+
+Feedback from Codex:
+- 4067 “remove the concept of monthly events” (docs/V2/epic-4064-exported-at-20251208T1640+0000.csv (line 7)): the results card prominently surfaces “Monthly events” and every calculation multiplies daily traffic by 30 days (index.html (line 265), src/main.ts (line 240)), so the concept is still front-and-center.",true,2025/12/05 10:50:54,2025/12/08 12:39:07,2025/12/08 12:46:31,2025/12/08 12:46:31,2025/12/08 12:46:31,,0,,false,false,,,,,Done,4064,Realm Cost Calculator V2,,,,,-05:00,false,67f3f34d-e8c7-46dd-93de-0ea822350c17,Sales Enablement,in progress,false,2025/12/05 10:48:49,2025/12/08 12:32:04,,,,,,,,,,Standard,500000005,,,,,,,
+4068,Display: Average log reduction %  i could get with a tool like realm based on my sources,feature,brian@realm.security,,"Requestor - Devon
+
+Response from Codex:
+- 4068 “show average log reduction % + projected annual savings” (docs/V2/epic-4064-exported-at-20251208T1640+0000.csv (line 8)): the code computes an internal averageOptimization but only tucks the % away in a tooltip string (src/main.ts (line 933)), and the UI never promotes the metric nor any annualized savings (only monthly outputs exist in index.html (lines 235-307)).
+",false,2025/12/05 10:51:33,,2025/12/08 11:53:42,2025/12/05 10:51:33,,,0,,false,false,,,,[ ] 1. Projected annual savings from that reduction based on the SIEM cost,Backlog,4064,Realm Cost Calculator V2,,,,,-05:00,false,67f3f34d-e8c7-46dd-93de-0ea822350c17,Sales Enablement,in progress,false,2025/12/05 10:48:49,2025/12/08 12:32:04,,,,,,,,,,Standard,500000005,,,,,,,
+4077,Update the source,feature,brian@realm.security,,"Requestor - Devon 
+Should include every item  here:
+
+[Data Source - Priority - Google Sheets](https://docs.google.com/spreadsheets/d/13HWvQryYTeurnYlyU1XTXNMvxmnIlmo7zv34nGffZDo/edit?gid=0#gid=0)
+
+- 4077 “update the source list from the Google Sheet” (docs/V2/epic-4064-exported-at-20251208T1640+0000.csv (line 10)): all pricing and optimization data remain hard-coded in TypeScript (src/data/catalog.ts (line 24), src/data/cost-model.ts (line 1)); there is no ingestion of the referenced sheet or any sync workflow.
+
+Here is a copy of all of the sources Realm Security will cover:
+| |
+| --- |
+| Product Name |
+| AWS - CloudTrail  |
+| AWS - ALB logs |
+| AWS - VPC Flow Logs |
+| Crowdstrike Falcon  |
+| Palo Alto Networks - PanOS |
+| Fortinet - Fortigate |
+| Cisco Umbrella |
+| InfoBlox |
+| Zscaler - ZIA |
+| CloudFlare - WAF |
+| Okta |
+| Cisco Secure Firewall (f.k.a. Firepower) |
+| SonicWall - SonicOS/X |
+| Check Point Quantum |
+| Windows Event Logs |
+| Azure Monitor |
+| Microsoft - Defender |
+| Microsoft - Entra ID |
+| Google Cloud - Audit Logs |
+| Akamai |
+| [Wiz](http://wiz.io/)  |
+| Radware WAF |
+| Abnormal Email |
+| Fortinet - ZTNA |
+| AWS - WAF |
+| SentinelOne |
+| Cisco ASA Firewall |
+| Zscaler ZPA |
+| Palo Alto Networks - Threat Prevention |
+| Fortinet - FortiIPS |
+| Cisco Firepower IPS |
+| Ping Identity |
+| CyberArk - Privileged Access |
+| ForgeRock (Ping Identity) |
+| Trend Micro - TippingPoint |
+| F5 - Big-IP ASM |
+| Palo Alto - Cortex XDR |
+| Microsoft Office 365  |
+| Symantec - Carbon Black  |
+| Juniper Networks - SRX |
+| Symnatec - ProxySG |
+| Forepoint - Web Security |
+| Darktrace |
+| Mimecast Email  |",true,2025/12/05 11:27:55,2025/12/08 12:59:25,2025/12/08 12:59:25,2025/12/08 12:59:25,2025/12/08 12:59:25,,0,,false,false,,,,,Done,4064,Realm Cost Calculator V2,,,,,-05:00,false,67f3f34d-e8c7-46dd-93de-0ea822350c17,Sales Enablement,in progress,false,2025/12/05 10:48:49,2025/12/08 12:32:04,,,,,,,,,,Standard,500000005,,,,,,,
+4070,Display: Costs,feature,brian@realm.security,,"Requestor - Devon
+
+Cost Data provided by Pete - 
+$500k for 1TB in SIEM, Realm costs $70k per TB which includes data haven.
+Brian - Costs of REAM is from product costs in Hubspot.
+Firewall - 70%, Network - 60%, Endpoint - 50% reduction - Pete (Make it fixed points, and remove any nunance data from customers).
+
+Total savings relative to cost of Realm, output would be an ROI ratio, total data reduced, aggregate volume and ratio relative to realm.  
+
+Said another way
+
+Output will be total percentage of reduction, aggregate volume reduced and ratio of ROI. if we are saving them 220 and its 2X the cost of Realm. - Pete
+
+Says ""Including the cost of REALM.  It needs to be super clear."" - Devon
+
+Unlike our competitors we are transparent about our costs, and our integrations. - Matt
+
+Response from Codex:
+- 4070 “display costs w/ $500k per TB SIEM vs $70k per TB Realm, ROI ratio, total data reduced, and make Realm cost crystal clear” (docs/V2/epic-4064-exported-at-20251208T1640+0000.csv (line 14)): the model still uses per-million-event rates taken from the catalog arrays (src/main.ts (line 245), src/data/catalog.ts (line 24)) and only outputs Current Cost vs With Realm (index.html (lines 269-305)); there is no TB-based pricing, no ROI ratio, no aggregate reduction summary, and Realm platform fees only appear in tooltip copy.",true,2025/12/05 10:52:08,2025/12/08 13:26:51,2025/12/08 13:26:51,2025/12/08 13:26:51,2025/12/08 13:26:51,,0,,false,false,,,,[ ] Total Cost including Realm Focus (should include realm annual price);[ ] Total Cost without Realm Focus (should be much higher),Done,4064,Realm Cost Calculator V2,,,,,-05:00,false,67f3f34d-e8c7-46dd-93de-0ea822350c17,Sales Enablement,in progress,false,2025/12/05 10:48:49,2025/12/08 12:32:04,,,,,,,,,,Standard,500000005,,,,,,,
+4073,Capture Data for Each Rep,feature,brian@realm.security,,"Requestor - Pete
+
+Response from Codex:
+- 4073 “capture data for each rep” (docs/V2/epic-4064-exported-at-20251208T1640+0000.csv (line 30)): the experience is an anonymous calculator with a PDF export form (index.html (lines 309-359)) and purely client-side state (src/main.ts (lines 300-389)); there is no per-rep login, storage, or session recovery.",false,2025/12/05 10:53:24,,2025/12/08 11:55:10,2025/12/05 10:53:24,,,0,,false,false,,,,,Backlog,4064,Realm Cost Calculator V2,,,,,-05:00,false,67f3f34d-e8c7-46dd-93de-0ea822350c17,Sales Enablement,in progress,false,2025/12/05 10:48:49,2025/12/08 12:32:04,,,,,,,,,,Standard,500000005,,,,,,,
+4074,"Agreement on The Associated Costs, and Reductions",feature,brian@realm.security,,"Requestor: Brian
+
+Response from Codex:
+- 4074 “agreement on the associated costs and reductions” (docs/V2/epic-4064-exported-at-20251208T1640+0000.csv (line 31)): the reduction/fee constants are embedded in code comments and not surfaced for review (src/data/cost-model.ts (lines 1-74)), so there is no mechanism to confirm the numbers with the stakeholders who provided the new assumptions.",false,2025/12/05 10:53:58,,2025/12/08 11:55:34,2025/12/05 10:53:58,,,0,,false,false,,,,,Backlog,4064,Realm Cost Calculator V2,,,,,-05:00,false,67f3f34d-e8c7-46dd-93de-0ea822350c17,Sales Enablement,in progress,false,2025/12/05 10:48:49,2025/12/08 12:32:04,,,,,,,,,,Standard,500000005,,,,,,,
+4075,"Elimination of any speculation or ""Bullshit"" before production",feature,brian@realm.security,,"Requestor - Matt
+
+If it comes across as a marketing tool.  If it's a honest as we can be it has value otherwise, we shouldn't do anything else.  This will help us gain credibility if we don't have anything to defend.  
+
+Even a sales person could do it.  Matt will give you a demo you don't have to POC.  We've already established the ROI, youve agreed functionality and usecase has value. 
+
+Response from Codex:
+- 4075 “eliminate speculation/marketing spin” (docs/V2/epic-4064-exported-at-20251208T1640+0000.csv (line 32)): the landing copy still reads like a marketing page (index.html (lines 108-175)) and even includes a gated competitor comparison toggle (src/main.ts (lines 37-59)), which conflicts with the directive to keep it strictly factual and sales-rep-ready.",false,2025/12/05 11:21:29,,2025/12/08 11:55:58,2025/12/05 11:21:29,,,0,,false,false,,,,,Backlog,4064,Realm Cost Calculator V2,,,,,-05:00,false,67f3f34d-e8c7-46dd-93de-0ea822350c17,Sales Enablement,in progress,false,2025/12/05 10:48:49,2025/12/08 12:32:04,,,,,,,,,,Standard,500000005,,,,,,,
+4066,Display the associated Realm Costs in plain terms,feature,brian@realm.security,,"Requestor - Devon
+
+Response from Codex:
+- 4066 “display associated Realm costs in plain terms” (docs/V2/epic-4064-exported-at-20251208T1640+0000.csv (line 37)): the only Realm-specific number is the combined “With Realm” total (index.html (line 289)), while the detailed breakdown (legacy tooling removed, provider ingest reduced, platform fee added) lives inside a tooltip (src/main.ts (lines 933-945)), so costs are not visible “in plain terms.”",false,2025/12/05 10:50:32,,2025/12/08 11:56:17,2025/12/05 10:50:32,,,0,,false,false,,,,,Backlog,4064,Realm Cost Calculator V2,,,,,-05:00,false,67f3f34d-e8c7-46dd-93de-0ea822350c17,Sales Enablement,in progress,false,2025/12/05 10:48:49,2025/12/08 12:32:04,,,,,,,,,,Standard,500000005,,,,,,,
+4065,Remove Source costs,feature,brian@realm.security,brian@realm.security,"Requestor - Pete
+
+Response from Codex:
+- 4065 “remove source costs” (docs/V2/epic-4064-exported-at-20251208T1640+0000.csv (line 38)): the workflow still begins with picking one or more sources and uses their per-million-event egress rates in every calculation (index.html (lines 132-170), src/main.ts (lines 235-262)), so source cost modeling hasn’t been removed.",true,2025/12/05 10:49:05,2025/12/08 12:32:04,2025/12/08 12:46:27,2025/12/08 12:46:27,2025/12/08 12:46:27,,0,,false,false,,,,,Done,4064,Realm Cost Calculator V2,,,,,-05:00,false,67f3f34d-e8c7-46dd-93de-0ea822350c17,Sales Enablement,in progress,false,2025/12/05 10:48:49,2025/12/08 12:32:04,,,,,,,,,,Standard,500000005,,,,,,,
