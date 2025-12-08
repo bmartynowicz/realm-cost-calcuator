@@ -79,15 +79,19 @@ Destinations as confirmed by Devon's spreadsheet:
 | SentinelOne Singularity |
 | Elastic SIEM  |
 | Hunters |",false,2025/12/05 11:24:30,,2025/12/08 11:52:52,2025/12/05 11:24:30,,,0,,false,false,,,,,Backlog,4064,Realm Cost Calculator V2,,,,,-05:00,false,67f3f34d-e8c7-46dd-93de-0ea822350c17,Sales Enablement,to do,false,2025/12/05 10:48:49,,,,,,,,,,,Standard,500000005,,,,,,,
-4067,"Remove the concept of ""monthly events""",feature,brian@realm.security,,"Requestor - Devon
+4067,"Remove the concept of ""monthly events""",feature,brian@realm.security,,"Requestor - Devon
+
+Status review (2025-12-08):
+- The metrics card now speaks in daily terms only (see "Projected daily savings" plus the "Current cost" and "With Realm" rows in index.html lines 243-305).
+- Cost calculations operate on the `dailyTraffic` input without any 30-day multiplier, confirmed in src/main.ts lines 232-269.
+- Monthly verbiage has been scrubbed from the public UI, so this request is satisfied.",false,2025/12/05 10:50:54,,2025/12/08 11:53:24,2025/12/05 10:50:54,,,0,,false,false,,,,,Backlog,4064,Realm Cost Calculator V2,,,,,-05:00,false,67f3f34d-e8c7-46dd-93de-0ea822350c17,Sales Enablement,to do,false,2025/12/05 10:48:49,,,,,,,,,,,Standard,500000005,,,,,,,
 
-Feedback from Codex:
-- 4067 “remove the concept of monthly events” (docs/V2/epic-4064-exported-at-20251208T1640+0000.csv (line 7)): the results card prominently surfaces “Monthly events” and every calculation multiplies daily traffic by 30 days (index.html (line 265), src/main.ts (line 240)), so the concept is still front-and-center.",false,2025/12/05 10:50:54,,2025/12/08 11:53:24,2025/12/05 10:50:54,,,0,,false,false,,,,,Backlog,4064,Realm Cost Calculator V2,,,,,-05:00,false,67f3f34d-e8c7-46dd-93de-0ea822350c17,Sales Enablement,to do,false,2025/12/05 10:48:49,,,,,,,,,,,Standard,500000005,,,,,,,
-4068,Display: Average log reduction %  i could get with a tool like realm based on my sources,feature,brian@realm.security,,"Requestor - Devon
-
-Response from Codex:
-- 4068 “show average log reduction % + projected annual savings” (docs/V2/epic-4064-exported-at-20251208T1640+0000.csv (line 8)): the code computes an internal averageOptimization but only tucks the % away in a tooltip string (src/main.ts (line 933)), and the UI never promotes the metric nor any annualized savings (only monthly outputs exist in index.html (lines 235-307)).
+4068,Display: Average log reduction %  i could get with a tool like realm based on my sources,feature,brian@realm.security,,"Requestor - Devon
+
+Response from Codex:
+- 4068 "show average log reduction % + projected annual savings" (docs/V2/epic-4064-exported-at-20251208T1640+0000.csv (line 8)): the code still computes an internal `averageOptimization` but keeps it inside tooltip copy (src/main.ts line 933) and never surfaces a prominent percentage or projected annual savings. The UI now focuses on daily savings only, so the missing piece is exposing the reduction % and annualized math.
 ",false,2025/12/05 10:51:33,,2025/12/08 11:53:42,2025/12/05 10:51:33,,,0,,false,false,,,,[ ] 1. Projected annual savings from that reduction based on the SIEM cost,Backlog,4064,Realm Cost Calculator V2,,,,,-05:00,false,67f3f34d-e8c7-46dd-93de-0ea822350c17,Sales Enablement,to do,false,2025/12/05 10:48:49,,,,,,,,,,,Standard,500000005,,,,,,,
+
 4077,Update the source,feature,brian@realm.security,,"Requestor - Devon 
 Should include every item  here:
 

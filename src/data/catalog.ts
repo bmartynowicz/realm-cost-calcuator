@@ -5,28 +5,32 @@ export type TrafficCategory =
   | 'endpoint-edr'
   | 'saas-business';
 
-export interface Endpoint {
+export interface EndpointBase {
   id: string;
   label: string;
   description: string;
-  costPerMillionEvents: number;
   realmOptimization: number; // express as decimal (0.25 == 25%)
   trafficCategory?: TrafficCategory;
 }
 
-const DESTINATION_ALLOWLIST = new Set<Endpoint['id']>([
+export type SourceEndpoint = EndpointBase;
+
+export interface DestinationEndpoint extends EndpointBase {
+  costPerMillionEvents: number;
+}
+
+const DESTINATION_ALLOWLIST = new Set<DestinationEndpoint['id']>([
   'splunk-es',
   'sumo-logic-siem',
   'microsoft-sentinel',
   'crowdstrike-next-gen-siem',
 ]);
 
-export const sources: Endpoint[] = [
+export const sources: SourceEndpoint[] = [
   {
     id: 'aws-cloudtrail',
     label: 'AWS - CloudTrail',
     description: 'Account activity events captured across AWS services.',
-    costPerMillionEvents: 18,
     realmOptimization: 0.35,
     trafficCategory: 'cloud-infrastructure',
   },
@@ -34,7 +38,6 @@ export const sources: Endpoint[] = [
     id: 'aws-alb-logs',
     label: 'AWS - ALB logs',
     description: 'Application Load Balancer access logs for web traffic analysis.',
-    costPerMillionEvents: 16,
     realmOptimization: 0.28,
     trafficCategory: 'network-security',
   },
@@ -42,7 +45,6 @@ export const sources: Endpoint[] = [
     id: 'aws-vpc-flow-logs',
     label: 'AWS - VPC Flow Logs',
     description: 'Network flow records exported from VPC subnets and interfaces.',
-    costPerMillionEvents: 14,
     realmOptimization: 0.27,
     trafficCategory: 'network-security',
   },
@@ -50,7 +52,6 @@ export const sources: Endpoint[] = [
     id: 'crowdstrike-falcon',
     label: 'Crowdstrike Falcon',
     description: 'EDR detections, managed threat hunting, and audit events.',
-    costPerMillionEvents: 28,
     realmOptimization: 0.4,
     trafficCategory: 'endpoint-edr',
   },
@@ -58,7 +59,6 @@ export const sources: Endpoint[] = [
     id: 'palo-alto-networks-ngfw',
     label: 'Palo Alto Networks - PanOS',
     description: 'Threat, traffic, and URL filtering logs from PAN-OS.',
-    costPerMillionEvents: 27,
     realmOptimization: 0.6,
     trafficCategory: 'network-security',
   },
@@ -66,7 +66,6 @@ export const sources: Endpoint[] = [
     id: 'fortinet-fortigate',
     label: 'Fortinet - Fortigate',
     description: 'Unified threat management events from FortiGate appliances.',
-    costPerMillionEvents: 23,
     realmOptimization: 0.75,
     trafficCategory: 'network-security',
   },
@@ -74,7 +73,6 @@ export const sources: Endpoint[] = [
     id: 'cisco-umbrella',
     label: 'Cisco Umbrella',
     description: 'DNS-layer security and secure web gateway telemetry.',
-    costPerMillionEvents: 20,
     realmOptimization: 0.44,
     trafficCategory: 'network-security',
   },
@@ -82,7 +80,6 @@ export const sources: Endpoint[] = [
     id: 'infoblox-bloxone-ddi',
     label: 'InfoBlox',
     description: 'DNS, DHCP, and IP address management telemetry from BloxOne DDI.',
-    costPerMillionEvents: 20,
     realmOptimization: 0.71,
     trafficCategory: 'network-security',
   },
@@ -90,7 +87,6 @@ export const sources: Endpoint[] = [
     id: 'zscaler-internet-access',
     label: 'Zscaler - ZIA',
     description: 'Cloud proxy transactions and threat protection data.',
-    costPerMillionEvents: 22,
     realmOptimization: 0.34,
     trafficCategory: 'network-security',
   },
@@ -98,7 +94,6 @@ export const sources: Endpoint[] = [
     id: 'cloudflare-waf',
     label: 'CloudFlare - WAF',
     description: 'Web application firewall events and edge threat intelligence.',
-    costPerMillionEvents: 18,
     realmOptimization: 0.3,
     trafficCategory: 'network-security',
   },
@@ -106,7 +101,6 @@ export const sources: Endpoint[] = [
     id: 'okta',
     label: 'Okta',
     description: 'Identity provider system logs and authentication events.',
-    costPerMillionEvents: 23,
     realmOptimization: 0.38,
     trafficCategory: 'identity',
   },
@@ -114,7 +108,6 @@ export const sources: Endpoint[] = [
     id: 'google-cloud-audit-logs',
     label: 'Google Cloud - Audit Logs',
     description: 'Admin activity, data access, and system event logging.',
-    costPerMillionEvents: 18,
     realmOptimization: 0.32,
     trafficCategory: 'cloud-infrastructure',
   },
@@ -122,7 +115,6 @@ export const sources: Endpoint[] = [
     id: 'azure-monitor',
     label: 'Azure Monitor',
     description: 'Platform activity and diagnostic logs collected via Azure Monitor.',
-    costPerMillionEvents: 17,
     realmOptimization: 0.3,
     trafficCategory: 'cloud-infrastructure',
   },
@@ -130,7 +122,6 @@ export const sources: Endpoint[] = [
     id: 'microsoft-defender-endpoint',
     label: 'Microsoft - Defender',
     description: 'Behavioral detections and device telemetry from Defender.',
-    costPerMillionEvents: 26,
     realmOptimization: 0.38,
     trafficCategory: 'endpoint-edr',
   },
@@ -138,7 +129,6 @@ export const sources: Endpoint[] = [
     id: 'cisco-secure-firewall',
     label: 'Cisco Secure Firewall (f.k.a. Firepower)',
     description: 'Firewall, intrusion, and malware detection telemetry.',
-    costPerMillionEvents: 25,
     realmOptimization: 0.35,
     trafficCategory: 'network-security',
   },
@@ -146,7 +136,6 @@ export const sources: Endpoint[] = [
     id: 'sonicwall-capture-security',
     label: 'SonicWall - SonicOS/X',
     description: 'Firewall and advanced threat protection analytics.',
-    costPerMillionEvents: 16,
     realmOptimization: 0.25,
     trafficCategory: 'network-security',
   },
@@ -154,7 +143,6 @@ export const sources: Endpoint[] = [
     id: 'windows-event-logs',
     label: 'Windows Event Logs',
     description: 'Security, system, and application channel events from Windows hosts.',
-    costPerMillionEvents: 19,
     realmOptimization: 0.42,
     trafficCategory: 'endpoint-edr',
   },
@@ -162,7 +150,6 @@ export const sources: Endpoint[] = [
     id: 'akamai-security-events',
     label: 'Akamai',
     description: 'Edge security events from Akamai WAF and bot management services.',
-    costPerMillionEvents: 21,
     realmOptimization: 0.31,
     trafficCategory: 'network-security',
   },
@@ -170,13 +157,12 @@ export const sources: Endpoint[] = [
     id: 'microsoft-entra-id',
     label: 'Microsoft - Entra ID',
     description: 'Sign-in and audit events from Entra ID tenants.',
-    costPerMillionEvents: 19,
     realmOptimization: 0.33,
     trafficCategory: 'identity',
   },
 ];
 
-const allDestinations: Endpoint[] = [
+const allDestinations: DestinationEndpoint[] = [
   {
     id: 'splunk-es',
     label: 'Splunk Enterprise Security',
@@ -327,6 +313,6 @@ const allDestinations: Endpoint[] = [
   },
 ];
 
-export const destinations: Endpoint[] = allDestinations.filter((destination) =>
+export const destinations: DestinationEndpoint[] = allDestinations.filter((destination) =>
   DESTINATION_ALLOWLIST.has(destination.id),
 );

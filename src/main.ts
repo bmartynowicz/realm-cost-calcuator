@@ -1,5 +1,5 @@
 import { destinations, sources } from './data/catalog.ts';
-import type { Endpoint } from './data/catalog.ts';
+import type { DestinationEndpoint, SourceEndpoint } from './data/catalog.ts';
 import {
   describeTrafficRecommendation,
   getTrafficRecommendation,
@@ -9,12 +9,14 @@ import {
 } from './data/traffic-profiles.ts';
 
 type CalculatorState = {
-  sources: Endpoint[];
-  destination: Endpoint;
+  sources: SourceEndpoint[];
+  destination: DestinationEndpoint;
   dailyTraffic: number;
 };
 
 type TrafficUnit = 'events' | 'gigabytes' | 'terabytes';
+
+type SelectableEndpoint = SourceEndpoint | DestinationEndpoint;
 
 type CombinationOverride = {
   averageOptimization?: number;
@@ -202,7 +204,7 @@ type CombinedSourceMetrics = {
   realmOptimization: number;
 };
 
-const summarizeSources = (selectedSources: Endpoint[]): CombinedSourceMetrics => {
+const summarizeSources = (selectedSources: SourceEndpoint[]): CombinedSourceMetrics => {
   if (selectedSources.length === 0) {
     throw new Error('At least one source must be provided for calculation.');
   }
@@ -271,8 +273,8 @@ const calculate = ({ sources: selectedSources, destination, dailyTraffic }: Calc
 type CalculationResult = ReturnType<typeof calculate>;
 
 type ExportSnapshot = CalculationResult & {
-  sources: Endpoint[];
-  destination: Endpoint;
+  sources: SourceEndpoint[];
+  destination: DestinationEndpoint;
   trafficUnit: TrafficUnit;
   organizationSize: OrganizationSizeKey;
   recommendation: TrafficRecommendation;
@@ -643,7 +645,7 @@ const unlockCriblEstimate = () => {
   updateCriblDisplay(snapshotCost);
 };
 
-const populateSelect = (select: HTMLSelectElement, items: Endpoint[]) => {
+const populateSelect = (select: HTMLSelectElement, items: SelectableEndpoint[]) => {
   select.innerHTML = '';
   for (const endpoint of items) {
     const option = document.createElement('option');
@@ -664,7 +666,7 @@ const populateOrganizationSizeSelect = (select: HTMLSelectElement) => {
   }
 };
 
-const getEndpoint = (list: Endpoint[], id: string): Endpoint => {
+const getEndpoint = <T extends SelectableEndpoint>(list: T[], id: string): T => {
   const endpoint = list.find((item) => item.id === id);
   if (!endpoint) {
     throw new Error(`Unknown endpoint id: ${id}`);
@@ -672,12 +674,12 @@ const getEndpoint = (list: Endpoint[], id: string): Endpoint => {
   return endpoint;
 };
 
-const describeSourceReduction = (endpoint: Endpoint): string => {
+const describeSourceReduction = (endpoint: SourceEndpoint): string => {
   const percentage = (endpoint.realmOptimization * 100).toFixed(0);
   return `${endpoint.description} • ~${percentage}% typical Realm reduction`;
 };
 
-const renderDestinationSummary = (element: HTMLElement, endpoint: Endpoint) => {
+const renderDestinationSummary = (element: HTMLElement, endpoint: DestinationEndpoint) => {
   element.textContent = `${endpoint.description} - ${formatCurrency(
     endpoint.costPerMillionEvents,
   )} per million events`;
@@ -710,7 +712,7 @@ const getSelectedSourceIds = (): string[] =>
     .map((option) => option.value)
     .filter((value) => value !== '');
 
-const getSelectedSources = (): Endpoint[] => {
+const getSelectedSources = (): SourceEndpoint[] => {
   const selectedIds = getSelectedSourceIds();
   if (selectedIds.length === 0) {
     return [];
@@ -718,7 +720,7 @@ const getSelectedSources = (): Endpoint[] => {
   return selectedIds.map((id) => getEndpoint(sources, id));
 };
 
-const renderSourcesSummary = (element: HTMLElement, selectedSources: Endpoint[]) => {
+const renderSourcesSummary = (element: HTMLElement, selectedSources: SourceEndpoint[]) => {
   if (selectedSources.length === 0) {
     element.textContent = 'Select at least one source.';
     element.removeAttribute('title');
@@ -818,7 +820,7 @@ const update = () => {
 
   renderSourcesSummary(requiredSourceSummary, selectedSources);
 
-  let destination: Endpoint | null = null;
+  let destination: DestinationEndpoint | null = null;
   if (destinationId) {
     destination = getEndpoint(destinations, destinationId);
     renderDestinationSummary(requiredDestinationSummary, destination);
@@ -1253,6 +1255,10 @@ const initialize = () => {
     option.selected = false;
   }
   requiredSourceSelect.selectedIndex = -1;
+  const defaultSourceOption = requiredSourceSelect.options.item(0);
+  if (defaultSourceOption) {
+    defaultSourceOption.selected = true;
+  }
   buildSourceSearchRecords();
   applySourceSearchFilter(optionalSourceSearchInput?.value ?? '');
 
@@ -1261,14 +1267,23 @@ const initialize = () => {
   destinationPlaceholder.value = '';
   destinationPlaceholder.textContent = 'Select a destination';
   destinationPlaceholder.disabled = true;
-  destinationPlaceholder.selected = true;
+  destinationPlaceholder.selected = false;
   const [firstDestinationOption] = Array.from(requiredDestinationSelect.options);
   if (firstDestinationOption) {
     requiredDestinationSelect.insertBefore(destinationPlaceholder, firstDestinationOption);
   } else {
     requiredDestinationSelect.appendChild(destinationPlaceholder);
   }
-  requiredDestinationSelect.value = '';
+  const defaultDestinationOption = Array.from(requiredDestinationSelect.options).find(
+    (option) => option.value !== '',
+  );
+  if (defaultDestinationOption) {
+    defaultDestinationOption.selected = true;
+    requiredDestinationSelect.value = defaultDestinationOption.value;
+  } else {
+    destinationPlaceholder.selected = true;
+    requiredDestinationSelect.value = '';
+  }
 
   populateOrganizationSizeSelect(requiredOrganizationSizeSelect);
   enableClickToToggleMultiSelect(requiredSourceSelect);

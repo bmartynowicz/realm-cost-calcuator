@@ -1,4 +1,4 @@
-import type { Endpoint, TrafficCategory } from './catalog.ts';
+import type { SourceEndpoint, TrafficCategory } from './catalog.ts';
 
 const KB_PER_GIGABYTE = 1_024 * 1_024;
 
@@ -114,7 +114,7 @@ const getBaseline = (category: TrafficCategory, size: OrganizationSizeKey): { av
 };
 
 export const getTrafficRecommendation = (
-  endpoint: Endpoint,
+  endpoint: SourceEndpoint,
   size: OrganizationSizeKey,
 ): TrafficRecommendation => {
   const meta = getOrganizationSizeMeta(size);
