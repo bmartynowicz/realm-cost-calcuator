@@ -11,7 +11,6 @@
  *    exported constants and update accompanying comments.
  */
 
-export const DAYS_PER_MONTH = 30;
 export const REALM_PLATFORM_FEE_PER_MILLION = 7.5;
 
 // Cribl baseline used for comparative messaging. Values stem from a January 2024
@@ -180,7 +179,8 @@ export interface CostComputationInput {
 }
 
 export interface CostEstimate {
-  monthlyEvents: number;
+  dailyEvents: number;
+  /** Millions of events per day derived from the provided daily volume. */
   millionsOfEvents: number;
   standard: {
     ratePerMillion: number;
@@ -204,16 +204,6 @@ export interface CostEstimate {
   };
 }
 
-export const computeMonthlyEvents = (
-  dailyEvents: number,
-  daysPerMonth: number = DAYS_PER_MONTH,
-): number => {
-  if (!Number.isFinite(dailyEvents) || dailyEvents <= 0) {
-    return 0;
-  }
-  return dailyEvents * daysPerMonth;
-};
-
 export const calculateCombinedReduction = (
   source: IntegrationCost,
   destination: IntegrationCost,
@@ -227,8 +217,8 @@ export const estimateCosts = ({
   destination,
   dailyEvents,
 }: CostComputationInput): CostEstimate => {
-  const monthlyEvents = computeMonthlyEvents(dailyEvents);
-  const millions = monthlyEvents / 1_000_000;
+  const sanitizedDailyEvents = Number.isFinite(dailyEvents) && dailyEvents > 0 ? dailyEvents : 0;
+  const millions = sanitizedDailyEvents / 1_000_000;
 
   const standardRatePerMillion = source.unitCostPerMillion + destination.unitCostPerMillion;
   const standardTotal = millions * standardRatePerMillion;
@@ -249,7 +239,7 @@ export const estimateCosts = ({
   const criblSavingsVsRealm = realmTotal - criblTotal;
 
   return {
-    monthlyEvents,
+    dailyEvents: sanitizedDailyEvents,
     millionsOfEvents: millions,
     standard: {
       ratePerMillion: standardRatePerMillion,

@@ -22,7 +22,6 @@ type CombinationOverride = {
 };
 
 const REALM_PLATFORM_FEE_PER_MILLION = 7.5;
-const DAYS_PER_MONTH = 30;
 const KB_PER_GIGABYTE = 1_024 * 1_024;
 const KB_PER_TERABYTE = KB_PER_GIGABYTE * 1_024;
 const DEFAULT_EVENT_SIZE_KB = 1;
@@ -200,7 +199,6 @@ const formatDecimal = (
 };
 
 type CombinedSourceMetrics = {
-  costPerMillionEvents: number;
   realmOptimization: number;
 };
 
@@ -212,22 +210,19 @@ const summarizeSources = (selectedSources: Endpoint[]): CombinedSourceMetrics =>
   if (selectedSources.length === 1) {
     const [singleSource] = selectedSources;
     return {
-      costPerMillionEvents: singleSource.costPerMillionEvents,
       realmOptimization: singleSource.realmOptimization,
     };
   }
 
   const aggregates = selectedSources.reduce(
     (accumulator, source) => {
-      accumulator.costPerMillionEvents += source.costPerMillionEvents;
       accumulator.realmOptimization += source.realmOptimization;
       return accumulator;
     },
-    { costPerMillionEvents: 0, realmOptimization: 0 },
+    { realmOptimization: 0 },
   );
 
   return {
-    costPerMillionEvents: aggregates.costPerMillionEvents / selectedSources.length,
     realmOptimization: aggregates.realmOptimization / selectedSources.length,
   };
 };
@@ -237,13 +232,11 @@ const calculate = ({ sources: selectedSources, destination, dailyTraffic }: Calc
     throw new Error('At least one source must be selected.');
   }
 
-  const monthlyEvents = dailyTraffic * DAYS_PER_MONTH;
-  const millions = monthlyEvents / 1_000_000;
+  const millions = dailyTraffic / 1_000_000;
 
   const combinedSource = summarizeSources(selectedSources);
 
-  const providerRatePerMillion =
-    combinedSource.costPerMillionEvents + destination.costPerMillionEvents;
+  const providerRatePerMillion = destination.costPerMillionEvents;
   const legacyRatePerMillion = providerRatePerMillion + LEGACY_PIPELINE_OVERHEAD_PER_MILLION;
   const standardCost = millions * legacyRatePerMillion;
 
@@ -263,7 +256,6 @@ const calculate = ({ sources: selectedSources, destination, dailyTraffic }: Calc
   const savingsPercentage = standardCost > 0 ? (savings / standardCost) * 100 : 0;
 
   return {
-    monthlyEvents,
     standardCost,
     realmCost,
     savings,
@@ -308,7 +300,6 @@ const eventSizeField = document.querySelector<HTMLElement>('[data-role="event-si
 const sourceSummary = document.querySelector<HTMLSpanElement>('#sourceSummary');
 const destinationSummary = document.querySelector<HTMLSpanElement>('#destinationSummary');
 const trafficError = document.querySelector<HTMLSpanElement>('#trafficError');
-const monthlyEventsEl = document.querySelector<HTMLElement>('#monthlyEvents');
 const standardCostEl = document.querySelector<HTMLElement>('#standardCost');
 const realmCostEl = document.querySelector<HTMLElement>('#realmCost');
 const savingsEl = document.querySelector<HTMLElement>('#savings');
@@ -359,7 +350,6 @@ const optionalEventSizeField = eventSizeField ?? null;
 const requiredSourceSummary = assertElement(sourceSummary, 'Source summary');
 const requiredDestinationSummary = assertElement(destinationSummary, 'Destination summary');
 const requiredTrafficError = assertElement(trafficError, 'Traffic error');
-const requiredMonthlyEvents = assertElement(monthlyEventsEl, 'Monthly events');
 const requiredStandardCost = assertElement(standardCostEl, 'Current cost');
 const requiredRealmCost = assertElement(realmCostEl, 'Realm cost');
 const requiredSavings = assertElement(savingsEl, 'Savings');
@@ -598,12 +588,12 @@ const updateCriblDisplay = (formattedCost: string) => {
   }
 };
 
-const estimateCriblCost = (monthlyEvents: number, providerRatePerMillion: number): number => {
-  if (monthlyEvents <= 0) {
+const estimateCriblCost = (eventCount: number, providerRatePerMillion: number): number => {
+  if (eventCount <= 0) {
     return 0;
   }
 
-  const millions = monthlyEvents / 1_000_000;
+  const millions = eventCount / 1_000_000;
   const baseRate = providerRatePerMillion + CRIBL_PLATFORM_FEE_PER_MILLION;
   const adjustedRate = baseRate * (1 + CRIBL_MARKUP_RATE);
   return millions * adjustedRate;
@@ -682,7 +672,12 @@ const getEndpoint = (list: Endpoint[], id: string): Endpoint => {
   return endpoint;
 };
 
-const renderSummary = (element: HTMLElement, endpoint: Endpoint) => {
+const describeSourceReduction = (endpoint: Endpoint): string => {
+  const percentage = (endpoint.realmOptimization * 100).toFixed(0);
+  return `${endpoint.description} • ~${percentage}% typical Realm reduction`;
+};
+
+const renderDestinationSummary = (element: HTMLElement, endpoint: Endpoint) => {
   element.textContent = `${endpoint.description} - ${formatCurrency(
     endpoint.costPerMillionEvents,
   )} per million events`;
@@ -731,22 +726,20 @@ const renderSourcesSummary = (element: HTMLElement, selectedSources: Endpoint[])
   }
 
   if (selectedSources.length === 1) {
-    renderSummary(element, selectedSources[0]);
+    element.textContent = describeSourceReduction(selectedSources[0]);
     element.title = selectedSources[0].label;
     return;
   }
 
   const combined = summarizeSources(selectedSources);
-  element.textContent = `${selectedSources.length} sources selected • Avg provider rate ${formatCurrency(
-    combined.costPerMillionEvents,
-  )} per million events`;
+  const averageReduction = (combined.realmOptimization * 100).toFixed(0);
+  element.textContent = `${selectedSources.length} sources selected • Avg Realm reduction ~${averageReduction}%`;
   element.title = selectedSources.map((endpoint) => endpoint.label).join(', ');
 };
 
 const resetOutputs = () => {
   lastSnapshot = null;
   setExportButtonState(false);
-  requiredMonthlyEvents.textContent = '--';
   requiredStandardCost.textContent = '--';
   requiredRealmCost.textContent = '--';
   requiredSavings.textContent = '--';
@@ -828,7 +821,7 @@ const update = () => {
   let destination: Endpoint | null = null;
   if (destinationId) {
     destination = getEndpoint(destinations, destinationId);
-    renderSummary(requiredDestinationSummary, destination);
+    renderDestinationSummary(requiredDestinationSummary, destination);
     requiredDestinationSummary.title = destination.label;
   } else {
     requiredDestinationSummary.textContent = 'Select a destination.';
@@ -907,7 +900,6 @@ const update = () => {
   }
 
   const {
-    monthlyEvents,
     standardCost,
     realmCost,
     savings,
@@ -923,17 +915,16 @@ const update = () => {
     dailyTraffic: dailyEvents,
   });
 
-  requiredMonthlyEvents.textContent = formatNumber(monthlyEvents);
   requiredStandardCost.textContent = formatCurrency(Math.max(0, standardCost));
   requiredRealmCost.textContent = formatCurrency(Math.max(0, realmCost));
   requiredSavings.textContent = formatCurrency(savings);
   const standardTooltipMessage = `(${formatCurrency(
     providerRatePerMillion,
-  )} provider ingest + ${formatCurrency(LEGACY_PIPELINE_OVERHEAD_PER_MILLION)} legacy tooling per million events)`;
+  )} destination ingest + ${formatCurrency(LEGACY_PIPELINE_OVERHEAD_PER_MILLION)} legacy tooling per million events)`;
   setTooltipContent('standardBreakdown', standardTooltipMessage);
   const breakdownMessage = `Realm removes ${formatCurrency(
     LEGACY_PIPELINE_OVERHEAD_PER_MILLION,
-  )} in legacy tooling, reduces provider ingest by ${(averageOptimization * 100).toFixed(
+  )} in legacy tooling, reduces destination ingest by ${(averageOptimization * 100).toFixed(
     0,
   )}% to ${formatCurrency(optimizedRatePerMillion)} per million events and adds a ${formatCurrency(
     REALM_PLATFORM_FEE_PER_MILLION,
@@ -943,7 +934,7 @@ const update = () => {
     : breakdownMessage;
   setTooltipContent('realmBreakdown', realmTooltipMessage);
   const averageEventSizeForSnapshot = averageEventSizeUsed;
-  const criblCost = estimateCriblCost(monthlyEvents, providerRatePerMillion);
+  const criblCost = estimateCriblCost(dailyEvents, providerRatePerMillion);
 
   lastSnapshot = {
     sources: selectedSources,
@@ -956,7 +947,6 @@ const update = () => {
     averageEventSizeKb: averageEventSizeForSnapshot,
     criblCost,
     criblEstimateUnlocked: hasUnlockedCriblEstimate,
-    monthlyEvents,
     standardCost,
     realmCost,
     savings,
@@ -1023,7 +1013,7 @@ const buildScenarioLines = (snapshot: ExportSnapshot): string[] => {
   if (snapshot.sources.length > 1) {
     const combined = summarizeSources(snapshot.sources);
     lines.push(
-      `Average provider rate across sources: ${formatCurrency(combined.costPerMillionEvents)} per million events.`,
+      `Average Realm reduction across sources: ${(combined.realmOptimization * 100).toFixed(0)}% typical.`,
       'Scenario assumes evenly distributed volume across selected sources.',
     );
   }
@@ -1031,7 +1021,6 @@ const buildScenarioLines = (snapshot: ExportSnapshot): string[] => {
   lines.push(
     `Daily volume: ${describeDailyVolume(snapshot)}`,
     `Converted daily events: ${formatNumber(Math.round(snapshot.dailyEvents))}`,
-    `Monthly events modeled: ${formatNumber(Math.round(snapshot.monthlyEvents))}`,
   );
 
   const baselineSummary = describeTrafficRecommendation(snapshot.recommendation);
@@ -1044,10 +1033,10 @@ const buildFinancialLines = (snapshot: ExportSnapshot): string[] => {
   const absoluteSavingsPercent = Math.abs(snapshot.savingsPercentage);
   const savingsLine =
     snapshot.savings >= 0
-      ? `Projected savings (monthly): ${formatCurrency(snapshot.savings)} (${absoluteSavingsPercent.toFixed(
+      ? `Projected savings (daily): ${formatCurrency(snapshot.savings)} (${absoluteSavingsPercent.toFixed(
           1,
         )}% vs standard)`
-      : `Projected increase (monthly): ${formatCurrency(Math.abs(snapshot.savings))} (${absoluteSavingsPercent.toFixed(
+      : `Projected increase (daily): ${formatCurrency(Math.abs(snapshot.savings))} (${absoluteSavingsPercent.toFixed(
           1,
         )}% vs standard)`;
 
@@ -1057,7 +1046,7 @@ const buildFinancialLines = (snapshot: ExportSnapshot): string[] => {
     savingsLine,
     `Legacy pipeline rate per million: ${formatCurrency(snapshot.legacyRatePerMillion)} (${formatCurrency(
       snapshot.providerRatePerMillion,
-    )} provider ingest + ${formatCurrency(LEGACY_PIPELINE_OVERHEAD_PER_MILLION)} tooling)`,
+    )} destination ingest + ${formatCurrency(LEGACY_PIPELINE_OVERHEAD_PER_MILLION)} tooling)`,
     `Blended rate per million (Realm): ${formatCurrency(snapshot.optimizedRatePerMillion)} + ${formatCurrency(
       REALM_PLATFORM_FEE_PER_MILLION,
     )} platform fee`,

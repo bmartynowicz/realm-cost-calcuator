@@ -1,6 +1,6 @@
 # Realm Cost Calculator
 
-An interactive, client-side tool for estimating monthly integration costs and projected
+An interactive, client-side tool for estimating daily integration costs and projected
 savings when routing data through Realm. The calculator lets you choose from 19
 enterprise data sources spanning network, identity, infrastructure, and endpoint
 telemetry plus the top 20 SIEM destinations, enter expected daily traffic, and

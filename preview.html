@@ -43,7 +43,7 @@
             <h2 class="panel__title" id="source-heading">Source configuration</h2>
             <p class="panel__subtitle">
               Select the network, identity, infrastructure, or endpoint system
-              generating the data and we will use its published egress pricing.
+              generating the data so we can apply Realm's reduction assumptions to your volumes.
             </p>
           </div>
           <label class="field">
@@ -135,7 +135,7 @@
             </div>
             <span id="trafficHelp" class="field__hint"
               >Switch between gigabytes, terabytes, or events. Realm converts volumes using typical
-              event sizes per source. Monthly totals assume 30 days.</span
+              event sizes per source so comparisons stay consistent.</span
             >
             <span id="trafficError" class="field__error" role="alert"></span>
           </label>
@@ -152,7 +152,7 @@
           </div>
           <dl class="metrics">
             <div class="metrics__item metrics__item--savings">
-              <dt class="metrics__label metrics__label--savings">Projected monthly savings</dt>
+              <dt class="metrics__label metrics__label--savings">Projected daily savings</dt>
               <dd class="metrics__value metrics__value--with-tooltip metrics__value--savings">
                 <span id="savings">--</span>
                 <button
@@ -170,10 +170,6 @@
                 </button>
                 <span class="sr-only" id="savingsPercent" data-role="tooltip-text"></span>
               </dd>
-            </div>
-            <div class="metrics__item">
-              <dt class="metrics__label">Monthly events</dt>
-              <dd class="metrics__value" id="monthlyEvents">--</dd>
             </div>
             <div class="metrics__item">
               <dt class="metrics__label">- Current Cost</dt>

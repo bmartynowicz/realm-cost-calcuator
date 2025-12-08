@@ -101,14 +101,14 @@
   <text class="phase-title" x="294" y="162">Traffic baseline</text>
   <text class="phase-body" x="294" y="196">- User selects daily volume</text>
   <text class="phase-body" x="294" y="220">- Optional GB/TB to events</text>
-  <text class="phase-body" x="294" y="244">- Normalize to monthly events</text>
+  <text class="phase-body" x="294" y="244">- Normalize to daily events</text>
   <text class="note" x="294" y="280">Default payload size: 1 KB</text>
   <text class="note" x="294" y="302">Adjustable when using data units</text>
 
   <rect class="phase" x="540" y="120" width="230" height="220"/>
   <text class="phase-title" x="564" y="162">Standard blend</text>
   <text class="phase-body" x="564" y="196">- Add source + destination rate</text>
-  <text class="phase-body" x="564" y="220">- Multiply by monthly millions</text>
+  <text class="phase-body" x="564" y="220">- Multiply by daily millions</text>
   <text class="phase-body" x="564" y="244">- Benchmark incumbent spend</text>
   <text class="note" x="564" y="280">Baseline used for savings deltas</text>
 
@@ -120,9 +120,9 @@
   <text class="phase-body" x="834" y="268">- Compare to standard baseline</text>
   <text class="note" x="834" y="304">Outputs savings $, % for stories</text>
 
-  <!-- Monthly events pill -->
+  <!-- Daily events pill -->
   <rect class="pill" x="280" y="360" width="400" height="70"/>
-  <text x="300" y="407">Monthly events = (daily volume * 30) / 1,000,000</text>
+  <text x="300" y="407">Daily events = (daily volume / avg event size) / 1,000,000</text>
 
   <!-- Deliverable callout -->
   <rect class="phase output" x="720" y="360" width="320" height="110"/>

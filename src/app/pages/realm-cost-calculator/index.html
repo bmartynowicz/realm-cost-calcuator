@@ -6,7 +6,7 @@
     <title>Realm Cost Calculator</title>
     <meta
       name="description"
-      content="Realm Cost Calculator helps security and data teams estimate ingestion and egress costs across 19 prioritized security data sources and 20 SIEM destinations."
+      content="Realm Cost Calculator helps security and data teams estimate SIEM ingestion costs and projected savings across 19 prioritized security data sources and 20 SIEM destinations."
     />
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#0f172a" />
@@ -73,12 +73,12 @@
             "mainEntity": [
               {
                 "@type": "Question",
-                "name": "How accurate are the Realm Cost Calculator estimates?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "The calculator combines published pricing for data egress, ingestion, and Realm platform rates to produce planning-grade estimates. Final proposals factor in your retention goals, regional constraints, and negotiated enterprise agreements."
-                }
-              },
+              "name": "How accurate are the Realm Cost Calculator estimates?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The calculator combines published SIEM ingestion pricing and Realm platform rates to produce planning-grade estimates. Final proposals factor in your retention goals, regional constraints, and negotiated enterprise agreements."
+              }
+            },
               {
                 "@type": "Question",
                 "name": "Which data sources and SIEM platforms are supported?",
@@ -100,7 +100,7 @@
         ]
       }
     </script>
-    <script type="module" crossorigin src="./assets/index-BLBXkXHi.js"></script>
+    <script type="module" crossorigin src="./assets/index-Cic1pFS3.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-DZA6jXdi.css">
   </head>
   <body id="top">
@@ -134,7 +134,7 @@
             <h2 class="panel__title" id="source-heading">Source configuration</h2>
             <p class="panel__subtitle">
               Select the network, identity, infrastructure, or endpoint system
-              generating the data and we will use its published egress pricing.
+              generating the data so we can apply Realm's reduction assumptions to your volumes.
             </p>
           </div>
           <label class="field">
@@ -226,7 +226,7 @@
             </div>
             <span id="trafficHelp" class="field__hint"
               >Switch between gigabytes, terabytes, or events. Realm converts volumes using typical
-              event sizes per source. Monthly totals assume 30 days.</span
+              event sizes per source so comparisons stay consistent.</span
             >
             <span id="trafficError" class="field__error" role="alert"></span>
           </label>
@@ -243,7 +243,7 @@
           </div>
           <dl class="metrics">
             <div class="metrics__item metrics__item--savings">
-              <dt class="metrics__label metrics__label--savings">Projected monthly savings</dt>
+              <dt class="metrics__label metrics__label--savings">Projected daily savings</dt>
               <dd class="metrics__value metrics__value--with-tooltip metrics__value--savings">
                 <span id="savings">--</span>
                 <button
@@ -261,10 +261,6 @@
                 </button>
                 <span class="sr-only" id="savingsPercent" data-role="tooltip-text"></span>
               </dd>
-            </div>
-            <div class="metrics__item">
-              <dt class="metrics__label">Monthly events</dt>
-              <dd class="metrics__value" id="monthlyEvents">--</dd>
             </div>
             <div class="metrics__item">
               <dt class="metrics__label">- Current Cost</dt>
@@ -451,7 +447,7 @@
           <div class="panel__header">
             <h2 class="panel__title" id="how-it-works-heading">How the calculator works</h2>
             <p class="panel__subtitle">
-              Blend your telemetry volumes with vendor egress tables and Realm's optimized routing to quickly spot cost deltas.
+              Blend your telemetry volumes with destination ingest rates and Realm's optimized routing to quickly spot cost deltas.
             </p>
           </div>
           <article>
@@ -459,11 +455,11 @@
             <p>
               Start by selecting the systems that emit your high-volume logs. The dataset includes cloud infrastructure,
               identity platforms, endpoint detection, firewall appliances, and SaaS security tools. Realm keeps pricing
-              information updated so you can evaluate egress charges without chasing vendor PDFs.
+              information updated so you can evaluate downstream ingestion impact without chasing vendor PDFs.
             </p>
             <h3>Compare Realm against traditional ingestion</h3>
             <p>
-              Enter your average daily volume in events or raw data. Realm automatically converts volume to monthly totals,
+              Enter your average daily volume in events or raw data. Realm automatically converts volume between units,
               applies Realm optimization, and shows side-by-side cost projections for standard integration pipelines versus
               Realm's managed routing.
             </p>
@@ -525,9 +521,9 @@
                 hidden
               >
                 <p>
-                  The tool combines publicly available egress pricing, published SIEM ingestion tiers, and Realm's own platform
-                  rates. Estimates are intentionally conservative and serve as a planning baseline before we tailor a proposal to
-                  your retention and regional needs.
+                  The tool combines publicly available SIEM ingestion pricing and Realm's own platform rates. Estimates are
+                  intentionally conservative and serve as a planning baseline before we tailor a proposal to your retention and
+                  regional needs.
                 </p>
               </div>
             </article>
