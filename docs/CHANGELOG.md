@@ -7,6 +7,8 @@
 - Clarified the backlog export to mark the "Remove Monthly Events" request as satisfied and to note that the experience now surfaces daily savings.
 - Shifted the cost model to per-terabyte pricing ($500k/TB traditional SIEM vs $70k/TB Realm Focus), added ROI and data-reduction outputs to the UI, and covered them with Playwright assertions.
 - Added an in-product pricing note to spell out Realm’s $70k/TB all-in cost versus the $500k/TB SIEM benchmark for transparency (Shortcut 4066).
+- Default traffic unit now loads as terabytes; QA updated to expect TB-first recommendations.
+- Destination list now matches Devon’s confirmed set (Splunk, Sumo, S3/GCS/Azure Blob, Chronicle, Exabeam, Datadog, Cortex XSIAM, Hydrolix, Databricks, Snowflake, Panther, SentinelOne, Elastic SIEM, Hunters, CrowdStrike NG SIEM, MS Sentinel).
 
 ## 2025-11-03
 
