@@ -1,17 +1,16 @@
 # Realm Cost Calculator
 
-An interactive, client-side tool for estimating daily integration costs and projected
-savings when routing data through Realm. The calculator lets you choose from 44
-enterprise data sources spanning network, identity, infrastructure, and endpoint
-telemetry plus the top 20 SIEM destinations, enter expected daily traffic, and
-immediately compare traditional integration spend versus Realm's optimized
-approach.
+ An interactive, client-side tool for estimating integration costs and projected savings
+ when routing data through Realm. The calculator lets you choose from 44 enterprise data
+ sources spanning network, identity, infrastructure, and endpoint telemetry plus the top
+ 20 SIEM destinations, enter expected daily traffic, and immediately compare traditional
+ integration spend versus Realm's optimized approach with annualized pricing.
 
 ## Feature highlights
 
 - Daily volume tiers auto-populate realistic traffic baselines using category-specific event sizes.
   See [`docs/traffic-baselines.md`](docs/traffic-baselines.md) for the research notes behind each tier.
-- Per-terabyte pricing model makes costs explicit ($500k/TB legacy SIEM vs $70k/TB Realm Focus), with ROI and data-reduction outputs in the results panel.
+- Per-terabyte pricing model now focuses on annualized costs ($500k annually per 1 TB/day legacy SIEM vs $70k annually per 1 TB/day Realm Focus) and highlights projected annual savings, ROI, and data reduction in the results panel.
 - Executive summary PDF export packages the current scenario for finance or procurement stakeholders.
 - Competitive benchmarking against Cribl is temporarily hidden while we prep the V2 experience.
 - Updated data catalog and supporting research samples live under [`research/`](research/), making it easy to

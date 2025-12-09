@@ -59,13 +59,13 @@
                 spellcheck="false"
               />
             </div>
-            <select
-              id="sourceSelect"
-              class="field__input"
-              multiple
-              size="6"
+            <div
+              id="sourceList"
+              class="source-list"
+              role="listbox"
+              aria-multiselectable="true"
               aria-describedby="sourceHelp sourceSummary"
-            ></select>
+            ></div>
             <span id="sourceHelp" class="field__hint"
               >Use search to filter vendors, then click to toggle; choose any combination you need.</span
             >
@@ -146,15 +146,15 @@
           <div class="panel__header">
             <h2 class="panel__title" id="results-heading">Cost projection</h2>
             <p class="panel__subtitle">
-              Modeled at $500k per TB for traditional SIEM ingest versus $70k per TB with Realm
-              Focus included.
+              Modeled at $500k per 1 TB/day annually for traditional SIEM ingest versus $70k per 1
+              TB/day annually with Realm Focus included.
             </p>
           </div>
           <dl class="metrics">
             <div class="metrics__item metrics__item--savings">
-              <dt class="metrics__label metrics__label--savings">Projected savings vs traditional SIEM</dt>
+              <dt class="metrics__label metrics__label--savings">Projected annual savings vs traditional SIEM</dt>
               <dd class="metrics__value metrics__value--with-tooltip metrics__value--savings">
-                <span id="savings">--</span>
+                <span id="annualSavings">--</span>
                 <button
                   type="button"
                   class="metrics__tooltip-trigger"
@@ -171,8 +171,12 @@
                 <span class="sr-only" id="savingsPercent" data-role="tooltip-text"></span>
               </dd>
             </div>
+            <div class="metrics__item" style="display: none" aria-hidden="true">
+              <span id="savings">--</span>
+              <span id="dailySavingsBreakdown" data-role="tooltip-text" class="sr-only"></span>
+            </div>
             <div class="metrics__item">
-              <dt class="metrics__label">Traditional SIEM @ $500k per TB</dt>
+              <dt class="metrics__label">Traditional SIEM (annual @ $500k per 1 TB/day)</dt>
               <dd class="metrics__value metrics__value--with-tooltip">
                 <span id="standardCost">--</span>
                 <button
@@ -192,7 +196,7 @@
               </dd>
             </div>
             <div class="metrics__item">
-              <dt class="metrics__label">Realm total @ $70k per TB (Realm Focus included)</dt>
+              <dt class="metrics__label">Realm total (annual @ $70k per 1 TB/day, Realm Focus included)</dt>
               <dd class="metrics__value metrics__value--highlight metrics__value--with-tooltip">
                 <span id="realmCost">--</span>
                 <button
@@ -254,8 +258,9 @@
             </div>
           </dl>
           <p class="metrics__note">
-            Realm pricing shown here is all-in: $70k per TB of optimized volume with Realm Focus included.
-            The traditional benchmark uses $500k per TB of raw SIEM ingest so savings and ROI stay transparent.
+            Realm pricing shown here is all-in: $70k annually per 1 TB/day of optimized volume with
+            Realm Focus included. The traditional benchmark uses $500k annually per 1 TB/day of raw
+            SIEM ingest so savings and ROI stay transparent.
           </p>
           <div class="metrics__actions" aria-labelledby="results-heading">
             <div class="metrics__item metrics__item--action metrics__item--export">

@@ -23,8 +23,9 @@ type CombinationOverride = {
   note?: string;
 };
 
-const SIEM_COST_PER_TB = 500_000;
-const REALM_COST_PER_TB = 70_000;
+const SIEM_ANNUAL_COST_PER_TB = 500_000; // price for sustaining 1 TB/day for a year
+const REALM_ANNUAL_COST_PER_TB = 70_000; // price for sustaining 1 TB/day for a year with Realm Focus included
+const DAYS_PER_YEAR = 365;
 const KB_PER_GIGABYTE = 1_024 * 1_024;
 const KB_PER_TERABYTE = KB_PER_GIGABYTE * 1_024;
 const DEFAULT_EVENT_SIZE_KB = 1;
@@ -279,24 +280,30 @@ const calculate = ({
   const dataReductionPercentage =
     baselineTerabytes > 0 ? dataReductionTb / baselineTerabytes : 0;
 
-  const standardCost = baselineTerabytes * SIEM_COST_PER_TB;
-  const realmCost = optimizedTerabytes * REALM_COST_PER_TB;
+  const standardAnnual = baselineTerabytes * SIEM_ANNUAL_COST_PER_TB;
+  const realmAnnual = optimizedTerabytes * REALM_ANNUAL_COST_PER_TB;
+  const standardCost = standardAnnual / DAYS_PER_YEAR;
+  const realmCost = realmAnnual / DAYS_PER_YEAR;
   const savings = standardCost - realmCost;
-  const savingsPercentage = standardCost > 0 ? (savings / standardCost) * 100 : 0;
-  const roiMultiple = realmCost > 0 ? savings / realmCost : 0;
+  const annualSavings = standardAnnual - realmAnnual;
+  const savingsPercentage = standardAnnual > 0 ? (annualSavings / standardAnnual) * 100 : 0;
+  const roiMultiple = realmAnnual > 0 ? annualSavings / realmAnnual : 0;
 
   return {
     standardCost,
     realmCost,
     savings,
     savingsPercentage,
+    annualSavings,
+    standardAnnual,
+    realmAnnual,
     roiMultiple,
     baselineTerabytes,
     optimizedTerabytes,
     dataReductionTb,
     dataReductionPercentage,
-    realmRatePerTb: REALM_COST_PER_TB,
-    baselineRatePerTb: SIEM_COST_PER_TB,
+    realmRatePerTb: REALM_ANNUAL_COST_PER_TB,
+    baselineRatePerTb: SIEM_ANNUAL_COST_PER_TB,
     averageOptimization: appliedOptimization,
     calibrationNote: override?.note ?? '',
   };
@@ -314,6 +321,7 @@ type ExportSnapshot = CalculationResult & {
   dailyEvents: number;
   dailyTerabytes: number;
   averageEventSizeKb: number;
+  annualSavings: number;
   criblCost: number;
   criblEstimateUnlocked: boolean;
 };
@@ -324,7 +332,7 @@ type ExportContactDetails = {
   contactEmail: string;
 };
 
-const sourceSelect = document.querySelector<HTMLSelectElement>('#sourceSelect');
+const sourceList = document.querySelector<HTMLElement>('#sourceList');
 const sourceSearchInput = document.querySelector<HTMLInputElement>('[data-role="source-search"]');
 const destinationSelect = document.querySelector<HTMLSelectElement>('#destinationSelect');
 const organizationSizeSelect = document.querySelector<HTMLSelectElement>('#organizationSize');
@@ -340,6 +348,7 @@ const realmCostEl = document.querySelector<HTMLElement>('#realmCost');
 const savingsEl = document.querySelector<HTMLElement>('#savings');
 const roiMultipleEl = document.querySelector<HTMLElement>('#roiMultiple');
 const dataReductionEl = document.querySelector<HTMLElement>('#dataReduction');
+const annualSavingsEl = document.querySelector<HTMLElement>('#annualSavings');
 const calibrationNoteEl = document.querySelector<HTMLElement>('#calibrationNote');
 const trafficRecommendationEl = document.querySelector<HTMLParagraphElement>('#trafficRecommendation');
 const criblCostEl = ENABLE_CRIBL_COMPARISON
@@ -373,7 +382,7 @@ const assertElement = <T>(value: T | null, label: string): T => {
   return value;
 };
 
-const requiredSourceSelect = assertElement(sourceSelect, 'Source select');
+const requiredSourceList = assertElement(sourceList, 'Source list');
 const requiredDestinationSelect = assertElement(destinationSelect, 'Destination select');
 const requiredOrganizationSizeSelect = assertElement(
   organizationSizeSelect,
@@ -392,6 +401,7 @@ const requiredRealmCost = assertElement(realmCostEl, 'Realm cost');
 const requiredSavings = assertElement(savingsEl, 'Savings');
 const requiredRoiMultiple = assertElement(roiMultipleEl, 'ROI multiple');
 const requiredDataReduction = assertElement(dataReductionEl, 'Data reduction');
+const requiredAnnualSavings = assertElement(annualSavingsEl, 'Annual savings');
 const requiredTrafficRecommendation = assertElement(
   trafficRecommendationEl,
   'Traffic recommendation',
@@ -407,10 +417,12 @@ const exportFormInputs = [
   requiredExportContactInput,
   requiredExportEmailInput,
 ];
-let sourceSearchRecords: { option: HTMLOptionElement; tokens: string }[] = [];
+let sourceSearchRecords: { id: string; element: HTMLElement; tokens: string }[] = [];
+const selectedSourceIds = new Set<string>();
 let userTrafficEdited = false;
 let userEventSizeEdited = false;
 let currentRecommendation: TrafficRecommendation | null = null;
+let sourceScrollTop = 0;
 
 const normalizeSearchTerm = (value: string): string =>
   value
@@ -419,28 +431,33 @@ const normalizeSearchTerm = (value: string): string =>
     .toLowerCase();
 
 const buildSourceSearchRecords = (): void => {
-  sourceSearchRecords = Array.from(requiredSourceSelect.options).map((option) => {
-    const endpoint = sources.find((source) => source.id === option.value);
+  sourceSearchRecords = Array.from(
+    requiredSourceList.querySelectorAll<HTMLElement>('[data-source-id]'),
+  ).map((element) => {
+    const id = element.dataset.sourceId ?? '';
+    const endpoint = sources.find((source) => source.id === id);
     const tokens = normalizeSearchTerm(
-      `${option.textContent ?? ''} ${endpoint?.description ?? ''}`,
+      `${element.textContent ?? ''} ${endpoint?.description ?? ''}`,
     );
-    return { option, tokens };
+    return { id, element, tokens };
   });
 };
 
 const applySourceSearchFilter = (rawQuery: string): void => {
   const normalizedQuery = normalizeSearchTerm(rawQuery.trim());
   const hasQuery = normalizedQuery.length > 0;
+  const previousScrollTop = sourceScrollTop || requiredSourceList.scrollTop;
 
   for (const record of sourceSearchRecords) {
     const matches = !hasQuery || record.tokens.includes(normalizedQuery);
-    const keepVisible = matches || record.option.selected;
-    record.option.hidden = !keepVisible;
+    const keepVisible = matches || selectedSourceIds.has(record.id);
+    record.element.hidden = !keepVisible;
+    record.element.style.display = keepVisible ? '' : 'none';
   }
 
-  if (hasQuery) {
-    requiredSourceSelect.scrollTop = 0;
-  }
+  // Preserve scroll position so selecting items does not jump the list.
+  requiredSourceList.scrollTop = previousScrollTop;
+  sourceScrollTop = requiredSourceList.scrollTop;
 };
 
 const tooltipTextElements = new Map<string, HTMLElement>();
@@ -632,8 +649,9 @@ const estimateCriblCost = (dailyTerabytes: number): number => {
     return 0;
   }
 
-  const adjustedRatePerTb = REALM_COST_PER_TB * (1 + CRIBL_MARKUP_RATE);
-  return dailyTerabytes * adjustedRatePerTb;
+  const adjustedAnnualRatePerTb = REALM_ANNUAL_COST_PER_TB * (1 + CRIBL_MARKUP_RATE);
+  const annualCost = dailyTerabytes * adjustedAnnualRatePerTb;
+  return annualCost / DAYS_PER_YEAR;
 };
 
 const isConsumerDomain = (domain: string): boolean => CONSUMER_EMAIL_DOMAINS.has(domain);
@@ -716,36 +734,63 @@ const describeSourceReduction = (endpoint: SourceEndpoint): string => {
 
 const renderDestinationSummary = (element: HTMLElement, endpoint: DestinationEndpoint) => {
   element.textContent = `${endpoint.description} - modeled at ${formatCurrency(
-    SIEM_COST_PER_TB,
-  )} per TB of raw ingest`;
+    SIEM_ANNUAL_COST_PER_TB,
+  )} annually per 1 TB/day of raw ingest`;
 };
 
-const enableClickToToggleMultiSelect = (select: HTMLSelectElement) => {
-  select.addEventListener('mousedown', (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLOptionElement)) {
-      return;
-    }
+const updateSourceSelectionVisual = (button: HTMLButtonElement, isSelected: boolean): void => {
+  button.classList.toggle('source-list__item--selected', isSelected);
+  button.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+  button.setAttribute('data-selected', isSelected ? 'true' : 'false');
+};
 
-    event.preventDefault();
-    const previousScrollTop = select.scrollTop;
-    target.selected = !target.selected;
-    select.dispatchEvent(new Event('change', { bubbles: true }));
-    window.requestAnimationFrame(() => {
-      select.scrollTop = previousScrollTop;
-      if (!target.hidden) {
-        target.focus();
+const buildSourceList = (): void => {
+  requiredSourceList.innerHTML = '';
+  sourceSearchRecords = [];
+
+  for (const endpoint of sources) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'source-list__item';
+    button.dataset.sourceId = endpoint.id;
+    button.setAttribute('role', 'option');
+    button.setAttribute('aria-label', endpoint.label);
+    button.setAttribute('title', endpoint.description);
+
+    const label = document.createElement('span');
+    label.className = 'source-list__label';
+    label.textContent = endpoint.label;
+    button.appendChild(label);
+
+    const isSelected = selectedSourceIds.has(endpoint.id);
+    updateSourceSelectionVisual(button, isSelected);
+
+    button.addEventListener('mousedown', (event) => event.preventDefault());
+    button.addEventListener('click', () => {
+      const currentlySelected = selectedSourceIds.has(endpoint.id);
+      if (currentlySelected) {
+        selectedSourceIds.delete(endpoint.id);
       } else {
-        select.focus();
+        selectedSourceIds.add(endpoint.id);
       }
+      updateSourceSelectionVisual(button, !currentlySelected);
+      const snapshotScrollTop = sourceScrollTop || requiredSourceList.scrollTop;
+      handleSourceSelectionChange(snapshotScrollTop);
     });
-  });
+
+    requiredSourceList.appendChild(button);
+
+    sourceSearchRecords.push({
+      id: endpoint.id,
+      element: button,
+      tokens: normalizeSearchTerm(`${endpoint.label} ${endpoint.description}`),
+    });
+  }
+
+  applySourceSearchFilter(optionalSourceSearchInput?.value ?? '');
 };
 
-const getSelectedSourceIds = (): string[] =>
-  Array.from(requiredSourceSelect.selectedOptions)
-    .map((option) => option.value)
-    .filter((value) => value !== '');
+const getSelectedSourceIds = (): string[] => Array.from(selectedSourceIds);
 
 const getSelectedSources = (): SourceEndpoint[] => {
   const selectedIds = getSelectedSourceIds();
@@ -780,11 +825,13 @@ const resetOutputs = () => {
   requiredStandardCost.textContent = '--';
   requiredRealmCost.textContent = '--';
   requiredSavings.textContent = '--';
+  requiredAnnualSavings.textContent = '--';
   requiredRoiMultiple.textContent = '--';
   requiredDataReduction.textContent = '--';
   setTooltipContent('standardBreakdown', '');
   setTooltipContent('realmBreakdown', '');
   setTooltipContent('savingsPercent', '');
+  setTooltipContent('annualSavingsBreakdown', '');
   setTooltipContent('roiBreakdown', '');
   setTooltipContent('reductionBreakdown', '');
   updateCriblDisplay('--');
@@ -945,13 +992,16 @@ const update = () => {
   const {
     standardCost,
     realmCost,
-    savings,
-    savingsPercentage,
-    roiMultiple,
-    baselineTerabytes,
-    optimizedTerabytes,
-    dataReductionTb,
-    dataReductionPercentage,
+  savings,
+  savingsPercentage,
+  annualSavings,
+  standardAnnual,
+    realmAnnual,
+  roiMultiple,
+  baselineTerabytes,
+  optimizedTerabytes,
+  dataReductionTb,
+  dataReductionPercentage,
     baselineRatePerTb,
     realmRatePerTb,
     averageOptimization,
@@ -962,9 +1012,10 @@ const update = () => {
     dailyTerabytes,
   });
 
-  requiredStandardCost.textContent = formatCurrency(Math.max(0, standardCost));
-  requiredRealmCost.textContent = formatCurrency(Math.max(0, realmCost));
-  requiredSavings.textContent = formatCurrency(savings);
+  requiredStandardCost.textContent = formatCurrency(Math.max(0, standardAnnual));
+  requiredRealmCost.textContent = formatCurrency(Math.max(0, realmAnnual));
+  requiredSavings.textContent = formatCurrency(annualSavings);
+  requiredAnnualSavings.textContent = formatCurrency(annualSavings);
   requiredRoiMultiple.textContent =
     roiMultiple > 0
       ? `${formatDecimal(roiMultiple, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}x`
@@ -979,14 +1030,19 @@ const update = () => {
       : '--';
   const standardTooltipMessage = `${destination.label} modeled at ${formatCurrency(
     baselineRatePerTb,
-  )} per TB of raw ingest.`;
+  )} annually per 1 TB/day = ${formatCurrency(standardAnnual)} per year at ${formatDecimal(
+    baselineTerabytes,
+    { maximumFractionDigits: 3 },
+  )} TB/day.`;
   setTooltipContent('standardBreakdown', standardTooltipMessage);
   const realmTooltipMessageParts = [
     `Realm trims ${(averageOptimization * 100).toFixed(0)}% of daily volume to ${formatDecimal(
       optimizedTerabytes,
       { maximumFractionDigits: 3 },
     )} TB.`,
-    `Realm Focus included at ${formatCurrency(realmRatePerTb)} per TB.`,
+    `Realm Focus included at ${formatCurrency(realmRatePerTb)} annually per 1 TB/day = ${formatCurrency(
+      realmAnnual,
+    )} per year.`,
   ];
   const realmTooltipMessage =
     !optionalCalibrationNote && calibrationNote
@@ -1003,10 +1059,17 @@ const update = () => {
         })}% to ${formatDecimal(optimizedTerabytes, { maximumFractionDigits: 3 })} TB.`
       : '';
   setTooltipContent('reductionBreakdown', reductionTooltipMessage);
+  const annualSavingsTooltip =
+    annualSavings > 0
+      ? `Annual savings = ${formatCurrency(standardAnnual)} (traditional) minus ${formatCurrency(
+          realmAnnual,
+        )} (Realm).`
+      : 'Annual savings will appear after you enter a positive daily volume.';
+  setTooltipContent('dailySavingsBreakdown', annualSavingsTooltip);
   const roiTooltipMessage =
     roiMultiple > 0
-      ? `ROI = savings (${formatCurrency(savings)}) divided by Realm cost (${formatCurrency(
-          realmCost,
+      ? `ROI = savings (${formatCurrency(annualSavings)}) divided by Realm cost (${formatCurrency(
+          realmAnnual,
         )}).`
       : 'ROI becomes available after entering a valid volume.';
   setTooltipContent('roiBreakdown', roiTooltipMessage);
@@ -1023,6 +1086,9 @@ const update = () => {
     dailyEvents,
     dailyTerabytes,
     averageEventSizeKb: averageEventSizeForSnapshot,
+    annualSavings,
+    standardAnnual,
+    realmAnnual,
     criblCost,
     criblEstimateUnlocked: hasUnlockedCriblEstimate,
     standardCost,
@@ -1115,35 +1181,34 @@ const buildScenarioLines = (snapshot: ExportSnapshot): string[] => {
 
 const buildFinancialLines = (snapshot: ExportSnapshot): string[] => {
   const absoluteSavingsPercent = Math.abs(snapshot.savingsPercentage);
-  const savingsLine =
-    snapshot.savings >= 0
-      ? `Projected savings (daily): ${formatCurrency(snapshot.savings)} (${absoluteSavingsPercent.toFixed(
-          1,
-        )}% vs traditional)`
-      : `Projected increase (daily): ${formatCurrency(Math.abs(snapshot.savings))} (${absoluteSavingsPercent.toFixed(
-          1,
-        )}% vs traditional)`;
+  const annualSavingsLine =
+    snapshot.annualSavings >= 0
+      ? `Projected annual savings: ${formatCurrency(snapshot.annualSavings)} (steady daily volume x 365).`
+      : `Projected annual increase: ${formatCurrency(Math.abs(snapshot.annualSavings))} (steady daily volume x 365).`;
   const roiLine =
     snapshot.roiMultiple > 0
       ? `ROI vs Realm: ${formatDecimal(snapshot.roiMultiple, {
           maximumFractionDigits: 1,
           minimumFractionDigits: 1,
-        })}x (savings ÷ Realm cost)`
+        })}x (savings divided by Realm cost).`
       : 'ROI unavailable without a Realm cost.';
 
   const lines = [
-    `Traditional SIEM (${formatCurrency(snapshot.baselineRatePerTb)} per TB): ${formatCurrency(
-      Math.max(0, snapshot.standardCost),
-    )}`,
-    `Realm total (${formatCurrency(snapshot.realmRatePerTb)} per TB, Realm Focus included): ${formatCurrency(
-      Math.max(0, snapshot.realmCost),
-    )}`,
-    savingsLine,
+    `Traditional SIEM (annual @ ${formatCurrency(snapshot.baselineRatePerTb)} per 1 TB/day): ${formatCurrency(
+      Math.max(0, snapshot.standardAnnual),
+    )} per year.`,
+    `Realm total (annual @ ${formatCurrency(snapshot.realmRatePerTb)} per 1 TB/day): ${formatCurrency(
+      Math.max(0, snapshot.realmAnnual),
+    )} per year.`,
+    `Projected annual savings vs traditional: ${formatCurrency(snapshot.annualSavings)} (${absoluteSavingsPercent.toFixed(
+      1,
+    )}%).`,
+    annualSavingsLine,
     `Data reduced per day: ${formatDecimal(snapshot.dataReductionTb, { maximumFractionDigits: 3 })} TB (${formatDecimal(
       snapshot.dataReductionPercentage * 100,
       { maximumFractionDigits: 1, minimumFractionDigits: 1 },
-    )}% less)`,
-    `Average optimization applied: ${(snapshot.averageOptimization * 100).toFixed(1)}%`,
+    )}% less).`,
+    `Average optimization applied: ${(snapshot.averageOptimization * 100).toFixed(1)}%.`,
     roiLine,
   ];
 
@@ -1342,17 +1407,8 @@ const setupFaqAccordion = () => {
 };
 
 const initialize = () => {
-  populateSelect(requiredSourceSelect, sources);
-  for (const option of Array.from(requiredSourceSelect.options)) {
-    option.selected = false;
-  }
-  requiredSourceSelect.selectedIndex = -1;
-  const defaultSourceOption = requiredSourceSelect.options.item(0);
-  if (defaultSourceOption) {
-    defaultSourceOption.selected = true;
-  }
-  buildSourceSearchRecords();
-  applySourceSearchFilter(optionalSourceSearchInput?.value ?? '');
+  selectedSourceIds.clear();
+  buildSourceList();
 
   populateSelect(requiredDestinationSelect, destinations);
   const destinationPlaceholder = document.createElement('option');
@@ -1378,19 +1434,34 @@ const initialize = () => {
   }
 
   populateOrganizationSizeSelect(requiredOrganizationSizeSelect);
-  enableClickToToggleMultiSelect(requiredSourceSelect);
-  requiredTrafficUnit.value = 'gigabytes';
+  requiredTrafficUnit.value = 'terabytes';
   requiredOrganizationSizeSelect.value =
     organizationSizeOptions[0]?.id ?? requiredOrganizationSizeSelect.value;
   applyRecommendation({ overrideTraffic: true, overrideEventSize: true });
   update();
 };
 
-requiredSourceSelect.addEventListener('change', () => {
+const handleSourceSelectionChange = (scrollSnapshot: number): void => {
+  const previousScrollTop = scrollSnapshot || sourceScrollTop || requiredSourceList.scrollTop;
   applyRecommendation({ overrideEventSize: !userEventSizeEdited });
   update();
-  applySourceSearchFilter(optionalSourceSearchInput?.value ?? '');
+  requiredSourceList.scrollTop = previousScrollTop;
+  sourceScrollTop = previousScrollTop;
+  let ticks = 0;
+  const id = window.setInterval(() => {
+    requiredSourceList.scrollTop = previousScrollTop;
+    sourceScrollTop = previousScrollTop;
+    ticks += 1;
+    if (ticks >= 50) {
+      window.clearInterval(id);
+    }
+  }, 20);
+};
+
+requiredSourceList.addEventListener('scroll', () => {
+  sourceScrollTop = requiredSourceList.scrollTop;
 });
+
 requiredDestinationSelect.addEventListener('change', update);
 requiredOrganizationSizeSelect.addEventListener('change', () => {
   applyRecommendation({ overrideTraffic: true, overrideEventSize: true });
@@ -1481,6 +1552,18 @@ if (criblUi) {
 
 setupFaqAccordion();
 initialize();
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
