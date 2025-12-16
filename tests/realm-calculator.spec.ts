@@ -91,17 +91,17 @@ test.describe('Realm Cost Calculator experience', () => {
     await trafficUnit.selectOption('terabytes');
     await trafficInput.fill('10');
     await expect(standardCost).toHaveText('$5,000,000');
-    await expect(realmCost).toHaveText('$210,000');
-    await expect(savings).toHaveText('$4,790,000');
-    await expect(annualSavings).toHaveText('$4,790,000');
-    await expect(roi).toHaveText('22.8x');
+    await expect(realmCost).toHaveText('$700,000');
+    await expect(savings).toHaveText('$4,300,000');
+    await expect(annualSavings).toHaveText('$4,300,000');
+    await expect(roi).toHaveText('6.1x');
     await expect(reduction).toHaveText(/7(\.0)?\s*TB \(70\.0% less\)/);
     await expect(roiTrigger).toBeVisible();
     await expect(reductionTrigger).toBeVisible();
-    await expect(roiTooltip).toContainText('savings ($4,790,000) divided by Realm cost ($210,000)');
+    await expect(roiTooltip).toContainText('savings ($4,300,000) divided by Realm cost ($700,000)');
     await expect(reductionTooltip).toContainText('10 TB/day in raw telemetry reduced by 70.0% to 3');
-    await expect(annualSavings).toContainText('$4,790,000');
-    await expect(pricingNote).toContainText('$70k annually per 1 TB/day of optimized volume');
+    await expect(annualSavings).toContainText('$4,300,000');
+    await expect(pricingNote).toContainText('$70k annually per 1 TB/day of raw volume');
     await expect(pricingNote).toContainText('$500k annually per 1 TB/day of raw SIEM ingest');
 
     // Multi-source scenario (Fortinet + Okta)
@@ -109,13 +109,13 @@ test.describe('Realm Cost Calculator experience', () => {
     await trafficInput.fill('10');
 
     await expect(standardCost).toHaveText('$5,000,000');
-    await expect(realmCost).toHaveText('$280,000');
-    await expect(savings).toHaveText('$4,720,000');
-    await expect(annualSavings).toHaveText('$4,720,000');
-    await expect(roi).toHaveText('16.9x');
+    await expect(realmCost).toHaveText('$700,000');
+    await expect(savings).toHaveText('$4,300,000');
+    await expect(annualSavings).toHaveText('$4,300,000');
+    await expect(roi).toHaveText('6.1x');
     await expect(reduction).toHaveText(/6(\.0)?\s*TB \(60\.0% less\)/);
-    await expect(roiTooltip).toContainText('savings ($4,720,000) divided by Realm cost ($280,000)');
+    await expect(roiTooltip).toContainText('savings ($4,300,000) divided by Realm cost ($700,000)');
     await expect(reductionTooltip).toContainText('10 TB/day in raw telemetry reduced by 60.0% to 4');
-    await expect(annualSavings).toContainText('$4,720,000');
+    await expect(annualSavings).toContainText('$4,300,000');
   });
 });

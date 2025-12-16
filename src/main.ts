@@ -111,7 +111,7 @@ type RealmLogoAsset = {
   height: number;
 };
 
-const REALM_LOGO_PATH = 'Realm-Security-Logo.png';
+const REALM_LOGO_PATH = 'Realm-New-Website-Logo.png';
 
 let realmLogoAsset: RealmLogoAsset | null | undefined;
 
@@ -281,7 +281,7 @@ const calculate = ({
     baselineTerabytes > 0 ? dataReductionTb / baselineTerabytes : 0;
 
   const standardAnnual = baselineTerabytes * SIEM_ANNUAL_COST_PER_TB;
-  const realmAnnual = optimizedTerabytes * REALM_ANNUAL_COST_PER_TB;
+  const realmAnnual = baselineTerabytes * REALM_ANNUAL_COST_PER_TB;
   const standardCost = standardAnnual / DAYS_PER_YEAR;
   const realmCost = realmAnnual / DAYS_PER_YEAR;
   const savings = standardCost - realmCost;
@@ -1040,7 +1040,7 @@ const update = () => {
       optimizedTerabytes,
       { maximumFractionDigits: 3 },
     )} TB.`,
-    `Realm Focus included at ${formatCurrency(realmRatePerTb)} annually per 1 TB/day = ${formatCurrency(
+    `Realm Focus included at ${formatCurrency(realmRatePerTb)} annually per 1 TB/day of raw volume = ${formatCurrency(
       realmAnnual,
     )} per year.`,
   ];

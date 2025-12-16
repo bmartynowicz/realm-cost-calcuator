@@ -1,0 +1,42 @@
+@font-face {
+  font-family: 'Onest';
+  src: url('/fonts/Onest-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --realm-primary: #3685b3;
+  --realm-secondary: #562f80;
+  --realm-accent: #1fc6db;
+  --realm-ink: #1e2227;
+  --realm-button: #343c57;
+  --realm-muted: #7e7f8e;
+
+  font-family: 'Golos Text', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --surface: #ffffff;
+  --surface-muted: #f6f7fb;
+  --surface-accent: var(--realm-ink);
+  --border: rgba(30, 34, 39, 0.12);
+  --text-primary: var(--realm-ink);
+  --text-secondary: var(--realm-muted);
+  --text-inverse: #ffffff;
+  --accent: var(--realm-primary);
+  --accent-strong: var(--realm-secondary);
+  --success: #10b981;
+}
+
+body {
+  background: linear-gradient(180deg, #ffffff 0%, #f6f7fb 100%);
+}
+
+.hero__title,
+.panel__title,
+.metrics__benchmark-value,
+.chart__title {
+  font-family: 'Onest', 'Golos Text', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: -0.02em;
+}
+
