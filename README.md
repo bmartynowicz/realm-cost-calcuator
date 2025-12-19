@@ -126,8 +126,8 @@ containing `{ ok, retried }` so you can hook it into analytics if needed.
 The pricing assumptions live in `src/data/catalog.ts`, which exports the 44-entry
 `sources` array and top-20 `destinations` array. Adjust the per-terabyte pricing and
 optimization percentages to fit your data contracts, and tweak the Realm TB rate in
-`src/main.ts` (and the mirrored values in `src/data/cost-model.ts`) to reflect your Realm
-platform agreement.
+`src/main.ts` to reflect your Realm platform agreement. Realm pricing is modeled as
+`$70k per 1 TB/day annually` with billing rounded up in `0.5 TB/day` increments and a `1 TB/day` minimum.
 
 Organization size presets and traffic baselines are defined in
 `src/data/traffic-profiles.ts` and documented in
@@ -150,3 +150,14 @@ npm run qa
 The scenarios cover traffic presets and validation around the
 executive summary export. Review the generated traces in `playwright-report/` if a test
 fails during local development or CI.
+
+## Building a WordPress zip
+
+To produce a static bundle that can be zipped and uploaded to WordPress:
+
+```bash
+npm install
+npm run build
+```
+
+Then zip the generated `dist/` directory contents (it contains `index.html` plus the hashed asset files under `assets/`).

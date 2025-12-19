@@ -25,6 +25,8 @@ type CombinationOverride = {
 
 const SIEM_ANNUAL_COST_PER_TB = 500_000; // price for sustaining 1 TB/day for a year
 const REALM_ANNUAL_COST_PER_TB = 70_000; // price for sustaining 1 TB/day for a year with Realm Focus included
+const REALM_MIN_BILLED_TB = 1;
+const REALM_BILLING_INCREMENT_TB = 0.5;
 const DAYS_PER_YEAR = 365;
 const KB_PER_GIGABYTE = 1_024 * 1_024;
 const KB_PER_TERABYTE = KB_PER_GIGABYTE * 1_024;
@@ -283,8 +285,16 @@ const calculate = ({
   const dataReductionPercentage =
     baselineTerabytes > 0 ? dataReductionTb / baselineTerabytes : 0;
 
+  const billedTerabytes =
+    baselineTerabytes > 0
+      ? Math.max(
+          REALM_MIN_BILLED_TB,
+          Math.ceil(baselineTerabytes / REALM_BILLING_INCREMENT_TB) * REALM_BILLING_INCREMENT_TB,
+        )
+      : 0;
+
   const standardAnnual = baselineTerabytes * SIEM_ANNUAL_COST_PER_TB;
-  const realmAnnual = baselineTerabytes * REALM_ANNUAL_COST_PER_TB;
+  const realmAnnual = billedTerabytes * REALM_ANNUAL_COST_PER_TB;
   const standardCost = standardAnnual / DAYS_PER_YEAR;
   const realmCost = realmAnnual / DAYS_PER_YEAR;
   const savings = standardCost - realmCost;
@@ -303,6 +313,7 @@ const calculate = ({
     roiMultiple,
     baselineTerabytes,
     optimizedTerabytes,
+    billedTerabytes,
     dataReductionTb,
     dataReductionPercentage,
     realmRatePerTb: REALM_ANNUAL_COST_PER_TB,
@@ -1153,7 +1164,7 @@ const update = () => {
   const dailyTerabytes = dailyGigabytes / 1_024;
 
   const {
-    standardCost,
+  standardCost,
     realmCost,
   savings,
   savingsPercentage,
@@ -1163,6 +1174,7 @@ const update = () => {
   roiMultiple,
   baselineTerabytes,
   optimizedTerabytes,
+  billedTerabytes,
   dataReductionTb,
   dataReductionPercentage,
     baselineRatePerTb,
@@ -1203,7 +1215,10 @@ const update = () => {
       optimizedTerabytes,
       { maximumFractionDigits: 3 },
     )} TB.`,
-    `Realm Focus included at ${formatCurrency(realmRatePerTb)} annually per 1 TB/day of raw volume = ${formatCurrency(
+    `Realm Focus billed in ${REALM_BILLING_INCREMENT_TB} TB/day increments (minimum ${REALM_MIN_BILLED_TB} TB/day): ${formatDecimal(
+      billedTerabytes,
+      { maximumFractionDigits: 1, minimumFractionDigits: 1 },
+    )} TB/day billed at ${formatCurrency(realmRatePerTb)} annually per 1 TB/day = ${formatCurrency(
       realmAnnual,
     )} per year.`,
   ];
@@ -1261,6 +1276,7 @@ const update = () => {
     roiMultiple,
     baselineTerabytes,
     optimizedTerabytes,
+    billedTerabytes,
     dataReductionTb,
     dataReductionPercentage,
     baselineRatePerTb,
@@ -1333,6 +1349,7 @@ const buildScenarioLines = (snapshot: ExportSnapshot): string[] => {
     `Daily volume: ${describeDailyVolume(snapshot)}`,
     `Converted daily events: ${formatNumber(Math.round(snapshot.dailyEvents))}`,
     `Traditional SIEM volume: ${formatDecimal(snapshot.baselineTerabytes, { maximumFractionDigits: 3 })} TB/day`,
+    `Realm billed volume: ${formatDecimal(snapshot.billedTerabytes, { maximumFractionDigits: 1, minimumFractionDigits: 1 })} TB/day (billed in ${REALM_BILLING_INCREMENT_TB} TB/day increments; ${REALM_MIN_BILLED_TB} TB/day minimum)`,
     `Realm-managed volume: ${formatDecimal(snapshot.optimizedTerabytes, { maximumFractionDigits: 3 })} TB/day after ${(snapshot.dataReductionPercentage * 100).toFixed(1)}% reduction.`,
   );
 
@@ -1360,9 +1377,12 @@ const buildFinancialLines = (snapshot: ExportSnapshot): string[] => {
     `Traditional SIEM (annual @ ${formatCurrency(snapshot.baselineRatePerTb)} per 1 TB/day): ${formatCurrency(
       Math.max(0, snapshot.standardAnnual),
     )} per year.`,
-    `Realm total (annual @ ${formatCurrency(snapshot.realmRatePerTb)} per 1 TB/day): ${formatCurrency(
+    `Realm total (annual @ ${formatCurrency(snapshot.realmRatePerTb)} per 1 TB/day, billed in ${REALM_BILLING_INCREMENT_TB} TB/day increments with ${REALM_MIN_BILLED_TB} TB/day minimum): ${formatCurrency(
       Math.max(0, snapshot.realmAnnual),
-    )} per year.`,
+    )} per year (billed at ${formatDecimal(snapshot.billedTerabytes, {
+      maximumFractionDigits: 1,
+      minimumFractionDigits: 1,
+    })} TB/day).`,
     `Projected annual savings vs traditional: ${formatCurrency(snapshot.annualSavings)} (${absoluteSavingsPercent.toFixed(
       1,
     )}%).`,
