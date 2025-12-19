@@ -334,6 +334,7 @@ type ExportSnapshot = CalculationResult & {
   dailyInput: number;
   dailyEvents: number;
   dailyTerabytes: number;
+  billedTerabytes: number;
   averageEventSizeKb: number;
   annualSavings: number;
   criblCost: number;
