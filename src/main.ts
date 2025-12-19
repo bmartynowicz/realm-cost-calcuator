@@ -74,6 +74,9 @@ type JsPdfGlobalNamespace = {
 
 const EXPORT_BUTTON_DEFAULT_LABEL = 'Download executive summary PDF';
 const EXPORT_BUTTON_ERROR_LABEL = 'Export unavailable - try again';
+const HUBSPOT_PORTAL_ID = '47829307';
+const HUBSPOT_FORM_GUID = 'a41763db-a9f8-46fa-9fbc-e1f7246cc18e';
+const HUBSPOT_EXEC_SUMMARY_FIELD = 'executive_summary';
 
 let jsPdfLoader: Promise<JsPdfConstructor | null> | null = null;
 
@@ -330,6 +333,17 @@ type ExportContactDetails = {
   companyName: string;
   contactName: string;
   contactEmail: string;
+};
+
+type HubSpotSubmissionField = { name: string; value: string };
+
+type HubSpotSubmissionPayload = {
+  fields: HubSpotSubmissionField[];
+  context?: {
+    hutk?: string;
+    pageUri?: string;
+    pageName?: string;
+  };
 };
 
 const sourceList = document.querySelector<HTMLElement>('#sourceList');
@@ -675,6 +689,155 @@ const validateWorkEmail = (value: string): string | null => {
   }
 
   return null;
+};
+
+const getCookieValue = (name: string): string | undefined => {
+  if (typeof document === 'undefined') {
+    return undefined;
+  }
+
+  const cookieName = `${encodeURIComponent(name)}=`;
+  const parts = document.cookie.split(';');
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (trimmed.startsWith(cookieName)) {
+      return decodeURIComponent(trimmed.slice(cookieName.length));
+    }
+  }
+  return undefined;
+};
+
+const splitContactName = (value: string): { firstName: string; lastName: string } => {
+  const tokens = value.trim().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) {
+    return { firstName: '', lastName: '' };
+  }
+  if (tokens.length === 1) {
+    return { firstName: tokens[0], lastName: '' };
+  }
+  return {
+    firstName: tokens.slice(0, -1).join(' '),
+    lastName: tokens[tokens.length - 1] ?? '',
+  };
+};
+
+const truncateValue = (value: string, maxLength: number): string => {
+  if (value.length <= maxLength) {
+    return value;
+  }
+  return `${value.slice(0, Math.max(0, maxLength - 1))}…`;
+};
+
+const dispatchHubSpotSubmissionEvent = (detail: { ok: boolean; retried?: boolean }) => {
+  if (typeof window === 'undefined' || typeof CustomEvent === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(new CustomEvent('realm:hubspot-submission', { detail }));
+};
+
+const mapOrganizationSizeToEmployeeCount = (size: OrganizationSizeKey): string => {
+  switch (size) {
+    case 'under-1000-gb':
+      return '999';
+    case '1000-5000-gb':
+      return '3000';
+    case 'over-5000-gb':
+      return '5001';
+    default: {
+      const exhaustiveCheck: never = size;
+      return exhaustiveCheck;
+    }
+  }
+};
+
+const buildHubSpotPayload = (
+  snapshot: ExportSnapshot,
+  contactDetails: ExportContactDetails,
+  options?: { includeExecutiveSummary?: boolean },
+): HubSpotSubmissionPayload => {
+  const { firstName, lastName } = splitContactName(contactDetails.contactName);
+  const sourceLabels = snapshot.sources.map((endpoint) => endpoint.label);
+  const sourceIds = snapshot.sources.map((endpoint) => endpoint.id);
+  const dataSources = truncateValue(sourceIds.join(';'), 5000);
+  const executiveSummary = [
+    'Realm Cost Calculator Executive Summary',
+    '',
+    ...buildScenarioLines(snapshot),
+    '',
+    ...buildFinancialLines(snapshot),
+  ].join('\n');
+
+  const fields: HubSpotSubmissionField[] = [
+    { name: 'company', value: contactDetails.companyName },
+    { name: 'email', value: contactDetails.contactEmail },
+    { name: 'firstname', value: firstName },
+    { name: 'lastname', value: lastName },
+    { name: 'siem', value: snapshot.destination.id },
+    { name: 'data_sources', value: dataSources },
+    { name: 'numemployees', value: mapOrganizationSizeToEmployeeCount(snapshot.organizationSize) },
+    { name: 'data_volume', value: snapshot.dailyTerabytes.toFixed(3) },
+  ];
+
+  if (options?.includeExecutiveSummary !== false) {
+    fields.push({ name: HUBSPOT_EXEC_SUMMARY_FIELD, value: truncateValue(executiveSummary, 10000) });
+  }
+
+  return {
+    fields,
+    context: {
+      hutk: getCookieValue('hubspotutk'),
+      pageUri: typeof window === 'undefined' ? undefined : window.location.href,
+      pageName: typeof document === 'undefined' ? undefined : document.title,
+    },
+  };
+};
+
+const submitHubSpotExport = async (
+  snapshot: ExportSnapshot,
+  contactDetails: ExportContactDetails,
+): Promise<void> => {
+  if (typeof fetch === 'undefined') {
+    return;
+  }
+
+  const endpoint = `https://api.hsforms.com/submissions/v3/integration/submit/${HUBSPOT_PORTAL_ID}/${HUBSPOT_FORM_GUID}`;
+  const attemptSubmit = async (payload: HubSpotSubmissionPayload) => {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      return { ok: true as const };
+    }
+
+    const contentType = response.headers.get('content-type') ?? '';
+    const errorBody = contentType.includes('application/json')
+      ? ((await response.json()) as unknown)
+      : await response.text();
+
+    return { ok: false as const, status: response.status, body: errorBody };
+  };
+
+  const payload = buildHubSpotPayload(snapshot, contactDetails);
+  const firstAttempt = await attemptSubmit(payload);
+  if (firstAttempt.ok) {
+    dispatchHubSpotSubmissionEvent({ ok: true });
+    return;
+  }
+
+  const fallbackPayload = buildHubSpotPayload(snapshot, contactDetails, { includeExecutiveSummary: false });
+  const fallbackAttempt = await attemptSubmit(fallbackPayload);
+  if (fallbackAttempt.ok) {
+    console.warn('HubSpot form submission succeeded after retry without executive summary.');
+    dispatchHubSpotSubmissionEvent({ ok: true, retried: true });
+    return;
+  }
+
+  console.warn('HubSpot form submission failed.', { firstAttempt, fallbackAttempt });
+  dispatchHubSpotSubmissionEvent({ ok: false, retried: true });
 };
 
 const unlockCriblEstimate = () => {
@@ -1344,6 +1507,8 @@ const handleExportPdf = async (contactDetails: ExportContactDetails) => {
   if (!lastSnapshot || requiredExportPdfButton.dataset.loading === 'true') {
     return;
   }
+
+  void submitHubSpotExport(lastSnapshot, contactDetails);
 
   requiredExportPdfButton.dataset.loading = 'true';
   requiredExportPdfButton.disabled = true;

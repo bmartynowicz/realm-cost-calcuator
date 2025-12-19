@@ -12,6 +12,7 @@
   See [`docs/traffic-baselines.md`](docs/traffic-baselines.md) for the research notes behind each tier.
 - Per-terabyte pricing model now focuses on annualized costs ($500k annually per 1 TB/day legacy SIEM vs $70k annually per 1 TB/day Realm Focus) and highlights projected annual savings, ROI, and data reduction in the results panel.
 - Executive summary PDF export packages the current scenario for finance or procurement stakeholders.
+- Executive summary submissions post lead + scenario fields to HubSpot when the export form is submitted (v1 capture).
 - Competitive benchmarking against Cribl is temporarily hidden while we prep the V2 experience.
 - Updated data catalog and supporting research samples live under [`research/`](research/), making it easy to
   trace every assumption back to a published source.
@@ -100,6 +101,25 @@ tests/                       # Playwright QA scenarios (run with `npm run qa`)
 ```
 
 Static assets placed in `public/` are copied as-is to the output directory during builds.
+
+## HubSpot lead capture (v1)
+
+When someone submits the executive summary export form, the calculator also submits the scenario to HubSpot via the
+Forms Submissions API. Field mapping:
+
+- `siem`: selected destination label
+- `siem`: selected destination id (semicolon-delimited values are not used because only one destination is selected)
+- `data_sources`: selected source ids (semicolon-delimited; matches HubSpot checkbox option values)
+- `numemployees`: approximated employee count (`999`, `3000`, `5001`) based on the company-size selection
+- `data_volume`: normalized TB/day (numeric string)
+- `company`, `firstname`, `lastname`, `email`: export form values
+- `executive_summary`: generated text summary (optional; the client retries without it if the HubSpot form rejects it)
+
+The HubSpot page script lives in `src/app/pages/realm-cost-calculator/index.html`. The TypeScript source includes the
+same submission logic for Vite builds in `src/main.ts`.
+
+The client also emits a browser event after attempting capture: `realm:hubspot-submission` with a `detail` payload
+containing `{ ok, retried }` so you can hook it into analytics if needed.
 
 ## Customizing the model
 

@@ -595,6 +595,243 @@
         <span class="back-to-top__label">Back to top</span>
       </a>
     </div>
+
+    <script>
+      (() => {
+        const HUBSPOT_PORTAL_ID = '47829307';
+        const HUBSPOT_FORM_GUID = 'a41763db-a9f8-46fa-9fbc-e1f7246cc18e';
+        const HUBSPOT_EXEC_SUMMARY_FIELD = 'executive_summary';
+        const HUBSPOT_ENDPOINT = `https://api.hsforms.com/submissions/v3/integration/submit/${HUBSPOT_PORTAL_ID}/${HUBSPOT_FORM_GUID}`;
+
+        const getCookieValue = (name) => {
+          const match = document.cookie.match(new RegExp(`(?:^|;\\\\s*)${name}=([^;]+)`));
+          return match ? decodeURIComponent(match[1]) : undefined;
+        };
+
+        const splitContactName = (value) => {
+          const tokens = value.trim().split(/\\s+/).filter(Boolean);
+          if (tokens.length === 0) {
+            return { firstName: '', lastName: '' };
+          }
+          if (tokens.length === 1) {
+            return { firstName: tokens[0], lastName: '' };
+          }
+          return { firstName: tokens.slice(0, -1).join(' '), lastName: tokens[tokens.length - 1] || '' };
+        };
+
+        const truncateValue = (value, maxLength) => {
+          if (value.length <= maxLength) {
+            return value;
+          }
+          return `${value.slice(0, Math.max(0, maxLength - 1))}…`;
+        };
+
+        const mapOrganizationSizeToEmployeeCount = (value) => {
+          switch (value) {
+            case 'under-1000-gb':
+              return '999';
+            case '1000-5000-gb':
+              return '3000';
+            case 'over-5000-gb':
+              return '5001';
+            default:
+              return '';
+          }
+        };
+
+        const getSelectedOptionLabel = (select) =>
+          select && select.selectedIndex >= 0 ? (select.options[select.selectedIndex]?.textContent || '').trim() : '';
+
+        const getSelectedOptionLabels = (select) =>
+          select
+            ? Array.from(select.selectedOptions)
+                .map((option) => (option.textContent || '').trim())
+                .filter(Boolean)
+            : [];
+
+        const getSelectedOptionValues = (select) =>
+          select
+            ? Array.from(select.selectedOptions)
+                .map((option) => String(option.value || '').trim())
+                .filter(Boolean)
+            : [];
+
+        const buildExecutiveSummary = (values) => {
+          const lines = [
+            'Realm Cost Calculator Executive Summary',
+            `Generated: ${new Date().toISOString()}`,
+            '',
+            `Company: ${values.company || '--'}`,
+            `Contact: ${values.contactName || '--'}`,
+            `Email: ${values.email || '--'}`,
+            '',
+            `SIEM: ${values.destination || '--'}`,
+            `Data sources (${values.sources.length}): ${values.sources.join(', ') || '--'}`,
+            `Number of employees: ${values.companySize || '--'}`,
+            `Average daily log volume: ${values.volume || '--'} ${values.volumeUnit || ''}`.trim(),
+            '',
+            `Projected daily savings: ${values.savings || '--'}`,
+            `Current cost: ${values.standardCost || '--'}`,
+            `With Realm: ${values.realmCost || '--'}`,
+          ];
+
+          return lines.join('\n');
+        };
+
+        const submitToHubSpot = async (payload) => {
+          const response = await fetch(HUBSPOT_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          return response.ok;
+        };
+
+        const dispatchHubSpotSubmissionEvent = (detail) => {
+          try {
+            window.dispatchEvent(new CustomEvent('realm:hubspot-submission', { detail }));
+          } catch {
+            return;
+          }
+        };
+
+        const exportForm = document.querySelector('[data-role="export-pdf-form"]');
+        if (!exportForm) {
+          return;
+        }
+
+        exportForm.addEventListener(
+          'submit',
+          () => {
+            if (!exportForm.checkValidity()) {
+              return;
+            }
+
+            const sourceSelect = document.querySelector('#sourceSelect');
+            const destinationSelect = document.querySelector('#destinationSelect');
+            const organizationSizeSelect = document.querySelector('#organizationSize');
+            const trafficInput = document.querySelector('#trafficInput');
+            const trafficUnit = document.querySelector('#trafficUnit');
+
+            const companyInput = document.querySelector('#exportCompanyInput');
+            const contactInput = document.querySelector('#exportContactInput');
+            const emailInput = document.querySelector('#exportEmailInput');
+
+            if (
+              !sourceSelect ||
+              !destinationSelect ||
+              !organizationSizeSelect ||
+              !trafficInput ||
+              !trafficUnit ||
+              !companyInput ||
+              !contactInput ||
+              !emailInput
+            ) {
+              return;
+            }
+
+            const sources = getSelectedOptionLabels(sourceSelect);
+            const sourceIds = getSelectedOptionValues(sourceSelect);
+            const destination = getSelectedOptionLabel(destinationSelect);
+            const destinationId = String(destinationSelect.value || '').trim();
+            const companySizeLabel = getSelectedOptionLabel(organizationSizeSelect);
+            const companySizeValue = String(organizationSizeSelect.value || '').trim();
+            const volume = String(trafficInput.value || '').trim();
+            const volumeUnit = getSelectedOptionLabel(trafficUnit);
+            const eventSizeInput = document.querySelector('#eventSizeInput');
+            const eventSizeKb = Math.max(
+              0.0001,
+              Number.parseFloat(String(eventSizeInput?.value || '').trim() || '1'),
+            );
+            const KB_PER_GIGABYTE = 1024 * 1024;
+            const KB_PER_TERABYTE = KB_PER_GIGABYTE * 1024;
+            const numericVolume = Number.parseFloat(volume || '0');
+            const dailyTerabytes =
+              volumeUnit === 'Events'
+                ? (numericVolume * eventSizeKb) / KB_PER_TERABYTE
+                : volumeUnit === 'Gigabytes'
+                  ? numericVolume / 1024
+                  : numericVolume;
+
+            const company = String(companyInput.value || '').trim();
+            const contactName = String(contactInput.value || '').trim();
+            const email = String(emailInput.value || '').trim();
+
+            const savings = (document.querySelector('#savings')?.textContent || '').trim();
+            const standardCost = (document.querySelector('#standardCost')?.textContent || '').trim();
+            const realmCost = (document.querySelector('#realmCost')?.textContent || '').trim();
+
+            if (
+              !company ||
+              !contactName ||
+              !email ||
+              sources.length === 0 ||
+              sourceIds.length === 0 ||
+              !destination ||
+              !destinationId ||
+              !volume
+            ) {
+              return;
+            }
+
+            if (!savings || savings === '--') {
+              return;
+            }
+
+            const { firstName, lastName } = splitContactName(contactName);
+            const executiveSummary = buildExecutiveSummary({
+              company,
+              contactName,
+              email,
+              sources,
+              destination,
+              companySize: companySizeLabel,
+              volume,
+              volumeUnit,
+              savings,
+              standardCost,
+              realmCost,
+            });
+
+            const fields = [
+              { name: 'company', value: company },
+              { name: 'email', value: email },
+              { name: 'firstname', value: firstName },
+              { name: 'lastname', value: lastName },
+              { name: 'siem', value: destinationId },
+              { name: 'data_sources', value: truncateValue(sourceIds.join(';'), 5000) },
+              { name: 'numemployees', value: mapOrganizationSizeToEmployeeCount(companySizeValue) },
+              { name: 'data_volume', value: dailyTerabytes.toFixed(3) },
+              { name: HUBSPOT_EXEC_SUMMARY_FIELD, value: truncateValue(executiveSummary, 10000) },
+            ];
+
+            const payload = {
+              fields,
+              context: {
+                hutk: getCookieValue('hubspotutk'),
+                pageUri: window.location.href,
+                pageName: document.title,
+              },
+            };
+
+            void submitToHubSpot(payload).then(async (ok) => {
+              if (ok) {
+                dispatchHubSpotSubmissionEvent({ ok: true });
+                return;
+              }
+
+              const fallbackPayload = {
+                ...payload,
+                fields: fields.filter((field) => field.name !== HUBSPOT_EXEC_SUMMARY_FIELD),
+              };
+              const fallbackOk = await submitToHubSpot(fallbackPayload);
+              dispatchHubSpotSubmissionEvent({ ok: fallbackOk, retried: true });
+            });
+          },
+          { capture: true },
+        );
+      })();
+    </script>
   </body>
 </html>
 
