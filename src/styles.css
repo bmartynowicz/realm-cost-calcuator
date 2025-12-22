@@ -149,6 +149,10 @@ body {
   color: rgba(226, 232, 240, 0.78);
 }
 
+.panel--accent .panel__title {
+  color: rgba(248, 250, 252, 0.92);
+}
+
 .field {
   display: flex;
   flex-direction: column;
@@ -564,7 +568,7 @@ body {
   border-radius: 0.75rem;
   border: none;
   background: #343c57;
-  color: var(--text-inverse);
+  color: #ffffff;
   font-weight: 600;
   cursor: pointer;
   transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
